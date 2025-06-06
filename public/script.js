@@ -31,12 +31,13 @@ if (loginForm) {
     });
 
     const data = await res.json();
-    if (res.ok) {
-      localStorage.setItem('usuario', JSON.stringify(data));
-      window.location.href = 'inicio.html';
+      if (res.ok) {
+        localStorage.setItem('usuario', JSON.stringify(data));
+        window.location.href = 'inicio.html';
+      }
+
     } else {
       alert('❌ ' + data.mensaje);
     }
   });
-});
 }
