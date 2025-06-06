@@ -21,11 +21,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-const start = async () => {
-  await mongoose.connect('mongodb+srv://a23328050730533:proyecto@cluster0.grtul3k.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
-
-  app.listen(PORT, () => {
-    console.log(`Servidor escuchando en el puerto ${PORT}`);
-  });
-};
-start();
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en el puerto ${PORT}`);
+});

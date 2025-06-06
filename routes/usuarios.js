@@ -21,4 +21,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.post('/login', async (req, res) => {
+  try {
+    const { nombre, contrasena } = req.body;
+    const usuario = await Usuario.findOne({ nombre, contrasena });
+    
+    if (usuario) {
+      res.json(usuario);
+    } else {
+      res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+    }
+  } catch (error) {
+    res.status(500).json({ mensaje: error.message });
+  }
+});
+
 module.exports = router;
