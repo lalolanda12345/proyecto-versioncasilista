@@ -34,7 +34,11 @@ if (loginForm) {
 
     const data = await res.json();
     if (res.ok) {
+      // Guardar información del usuario en localStorage
+      localStorage.setItem('usuarioLogueado', JSON.stringify(data));
       alert('✅ Sesión iniciada como: ' + data.nombre);
+      // Redirigir a la página de inicio
+      window.location.href = 'home.html';
     } else {
       alert('❌ ' + data.mensaje);
     }

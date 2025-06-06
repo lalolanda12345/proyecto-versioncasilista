@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inicio - Red Social</title>
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <div class="header">
+    <h2>Bienvenido a la Red Social</h2>
+    <button id="cerrarSesion" class="logout-btn">Cerrar Sesión</button>
+  </div>
+  
+  <div class="content">
+    <div class="user-info">
+      <h3>Usuario: <span id="nombreUsuario"></span></h3>
+    </div>
+    
+    <div class="nueva-publicacion">
+      <h3>Nueva Publicación</h3>
+      <form id="publicacionForm">
+        <textarea id="contenido" placeholder="¿Qué estás pensando?" required></textarea>
+        <button type="submit">Publicar</button>
+      </form>
+    </div>
+    
+    <div class="publicaciones">
+      <h3>Publicaciones Recientes</h3>
+      <div id="listaPublicaciones"></div>
+    </div>
+  </div>
+
+  <script src="home.js"></script>
+</body>
+</html>
