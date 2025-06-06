@@ -21,8 +21,26 @@
       <h3>Nueva Publicación</h3>
       <form id="publicacionForm">
         <textarea id="contenido" placeholder="¿Qué estás pensando?" required></textarea>
+        <input type="url" id="imagenUrl" placeholder="URL de imagen (opcional)">
         <button type="submit">Publicar</button>
       </form>
+    </div>
+    
+    <!-- Modal para editar publicación -->
+    <div id="editModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Editar Publicación</h3>
+        <form id="editForm">
+          <textarea id="editContenido" required></textarea>
+          <input type="url" id="editImagenUrl" placeholder="URL de imagen (opcional)">
+          <input type="hidden" id="editPublicacionId">
+          <div class="modal-buttons">
+            <button type="submit">Guardar</button>
+            <button type="button" id="cancelEdit">Cancelar</button>
+          </div>
+        </form>
+      </div>
     </div>
     
     <div class="publicaciones">
