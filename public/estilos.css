@@ -115,3 +115,9 @@ textarea {
   background-color: #e91e63;
   color: white;
 }
+
+.like-btn.liked {
+  background-color: #e91e63;
+  color: white;
+  border-color: #e91e63;
+}
