@@ -1,25 +1,60 @@
+// Variable global para el usuario
+let usuario = null;
 
-// Verificar si el usuario está logueado
-const usuarioLogueado = localStorage.getItem('usuarioLogueado');
-if (!usuarioLogueado) {
-  window.location.href = 'index.html';
+// Verificar sesión activa
+async function verificarSesion() {
+  try {
+    const res = await fetch('/usuarios/session');
+    if (res.ok) {
+      usuario = await res.json();
+      document.getElementById('nombreUsuario').textContent = usuario.nombre;
+      return true;
+    } else {
+      alert('❌ Debes iniciar sesión primero');
+      window.location.href = 'index.html';
+      return false;
+    }
+  } catch (error) {
+    alert('❌ Error de conexión');
+    window.location.href = 'index.html';
+    return false;
+  }
 }
 
-// Mostrar información del usuario
-const usuario = JSON.parse(usuarioLogueado);
-document.getElementById('nombreUsuario').textContent = usuario.nombre;
+// Inicializar la página
+async function inicializar() {
+  const sesionValida = await verificarSesion();
+  if (sesionValida) {
+    cargarPublicaciones();
+    // Actualizar publicaciones cada 3 segundos para simular tiempo real
+    setInterval(cargarPublicaciones, 3000);
+  }
+}
 
-// Manejar cierre de sesión
-document.getElementById('cerrarSesion').addEventListener('click', () => {
-  localStorage.removeItem('usuarioLogueado');
-  window.location.href = 'index.html';
+// Cerrar sesión
+document.getElementById('cerrarSesion').addEventListener('click', async () => {
+  try {
+    const res = await fetch('/usuarios/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res.ok) {
+      alert('✅ Sesión cerrada');
+      window.location.href = 'index.html';
+    } else {
+      alert('❌ Error al cerrar sesión');
+    }
+  } catch (error) {
+    alert('❌ Error de conexión');
+  }
 });
 
 // Manejar nueva publicación
 document.getElementById('publicacionForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const contenido = document.getElementById('contenido').value;
-  
+
   try {
     const res = await fetch('/publicaciones', {
       method: 'POST',
@@ -29,7 +64,7 @@ document.getElementById('publicacionForm').addEventListener('submit', async (e) 
         contenido: contenido 
       }),
     });
-    
+
     if (res.ok) {
       document.getElementById('contenido').value = '';
       cargarPublicaciones();
@@ -47,15 +82,15 @@ async function cargarPublicaciones() {
   try {
     const res = await fetch('/publicaciones');
     const publicaciones = await res.json();
-    
+
     const lista = document.getElementById('listaPublicaciones');
     lista.innerHTML = '';
-    
+
     publicaciones.reverse().forEach(pub => {
       const usuarioYaDioLike = pub.usuariosQueDieronLike && pub.usuariosQueDieronLike.includes(usuario._id);
       const likeButtonClass = usuarioYaDioLike ? 'like-btn liked' : 'like-btn';
       const likeButtonText = usuarioYaDioLike ? '❤️' : '🤍';
-      
+
       const div = document.createElement('div');
       div.className = 'publicacion';
       div.innerHTML = `
@@ -85,7 +120,7 @@ async function darLike(publicacionId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ usuarioId: usuario._id })
     });
-    
+
     if (res.ok) {
       cargarPublicaciones(); // Recargar las publicaciones para mostrar el nuevo conteo
     } else {
@@ -97,7 +132,9 @@ async function darLike(publicacionId) {
 }
 
 // Cargar publicaciones al iniciar
-cargarPublicaciones();
+//cargarPublicaciones();
 
 // Actualizar publicaciones cada 3 segundos para simular tiempo real
-setInterval(cargarPublicaciones, 3000);
+//setInterval(cargarPublicaciones, 3000);
+
+inicializar();

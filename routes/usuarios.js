@@ -27,6 +27,8 @@ router.post('/login', async (req, res) => {
     const usuario = await Usuario.findOne({ nombre, contrasena });
     
     if (usuario) {
+      // Guardar la sesión del usuario
+      req.session.usuario = usuario;
       res.json(usuario);
     } else {
       res.status(401).json({ mensaje: 'Credenciales incorrectas' });
@@ -34,6 +36,26 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ mensaje: error.message });
   }
+});
+
+// Ruta para verificar sesión activa
+router.get('/session', (req, res) => {
+  if (req.session.usuario) {
+    res.json(req.session.usuario);
+  } else {
+    res.status(401).json({ mensaje: 'No hay sesión activa' });
+  }
+});
+
+// Ruta para cerrar sesión
+router.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      res.status(500).json({ mensaje: 'Error al cerrar sesión' });
+    } else {
+      res.json({ mensaje: 'Sesión cerrada correctamente' });
+    }
+  });
 });
 
 module.exports = router;

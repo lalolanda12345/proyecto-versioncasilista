@@ -18,6 +18,21 @@ if (registroForm) {
   });
 }
 
+// Verificar sesión activa al cargar la página de login
+if (document.getElementById('loginForm')) {
+  // Verificar si ya hay una sesión activa
+  fetch('/usuarios/session')
+    .then(res => {
+      if (res.ok) {
+        // Ya hay sesión activa, redirigir a home
+        window.location.href = 'home.html';
+      }
+    })
+    .catch(() => {
+      // No hay sesión activa, continuar en login
+    });
+}
+
 // Inicio de sesión
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
@@ -34,8 +49,6 @@ if (loginForm) {
 
     const data = await res.json();
     if (res.ok) {
-      // Guardar información del usuario en localStorage
-      localStorage.setItem('usuarioLogueado', JSON.stringify(data));
       alert('✅ Sesión iniciada como: ' + data.nombre);
       // Redirigir a la página de inicio
       window.location.href = 'home.html';
