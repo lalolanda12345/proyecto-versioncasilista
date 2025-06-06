@@ -1,3 +1,4 @@
+// Registro
 const registroForm = document.getElementById('registroForm');
 if (registroForm) {
   registroForm.addEventListener('submit', async (e) => {
@@ -17,6 +18,7 @@ if (registroForm) {
   });
 }
 
+// Inicio de sesión
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
@@ -31,11 +33,8 @@ if (loginForm) {
     });
 
     const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('usuario', JSON.stringify(data));
-        window.location.href = 'inicio.html';
-      }
-
+    if (res.ok) {
+      alert('✅ Sesión iniciada como: ' + data.nombre);
     } else {
       alert('❌ ' + data.mensaje);
     }

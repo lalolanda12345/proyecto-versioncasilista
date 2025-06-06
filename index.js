@@ -6,15 +6,14 @@ mongoose.set('strictQuery', false);
 require('./database');
 
 app.use(express.json());
+
 app.use(express.static('public'));
 
 const usuariosRouter = require('./routes/usuarios');
 const publicacionesRouter = require('./routes/publicaciones');
-const reaccionesRouter = require('./routes/reacciones');
 
 app.use('/usuarios', usuariosRouter);
 app.use('/publicaciones', publicacionesRouter);
-app.use('/reacciones', reaccionesRouter); 
 
 app.get('/', (req, res) => {
   res.send('🚀 Bienvenido a la API de la red social');
