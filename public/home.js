@@ -61,13 +61,31 @@ async function cargarPublicaciones() {
         </div>
         <div class="publicacion-contenido">${pub.contenido}</div>
         <div class="publicacion-footer">
-          <span>❤️ ${pub.likes} likes</span>
+          <button class="like-btn" onclick="darLike('${pub._id}')">❤️ ${pub.likes}</button>
         </div>
       `;
       lista.appendChild(div);
     });
   } catch (error) {
     console.error('Error al cargar publicaciones:', error);
+  }
+}
+
+// Función para dar like a una publicación
+async function darLike(publicacionId) {
+  try {
+    const res = await fetch(`/publicaciones/${publicacionId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (res.ok) {
+      cargarPublicaciones(); // Recargar las publicaciones para mostrar el nuevo conteo
+    } else {
+      alert('❌ Error al dar like');
+    }
+  } catch (error) {
+    alert('❌ Error de conexión');
   }
 }
 

@@ -21,4 +21,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Ruta para dar like a una publicación
+router.post('/:id/like', async (req, res) => {
+  try {
+    const publicacion = await Publicacion.findById(req.params.id);
+    if (!publicacion) {
+      return res.status(404).json({ mensaje: 'Publicación no encontrada' });
+    }
+    
+    publicacion.likes += 1;
+    await publicacion.save();
+    res.json(publicacion);
+  } catch (error) {
+    res.status(500).json({ mensaje: error.message });
+  }
+});
+
 module.exports = router;
