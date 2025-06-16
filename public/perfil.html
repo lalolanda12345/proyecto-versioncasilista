@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Perfil de Usuario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      max-width: 800px;
+      margin: 0 auto 30px;
+    }
+
+    .header h2 {
+      color: white;
+      font-weight: 700;
+      font-size: 28px;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      background: linear-gradient(135deg, #64b5f6, #42a5f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logout-btn, .btn-edit {
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      margin: 5px;
+    }
+
+    .logout-btn::before, .btn-edit::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .logout-btn:hover::before, .btn-edit:hover::before {
+      left: 100%;
+    }
+
+    .logout-btn:hover, .btn-edit:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .perfil-card {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(30px);
+      border-radius: 32px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .perfil-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      padding: 50px 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .perfil-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: rotate 10s linear infinite;
+      opacity: 0.5;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .perfil-header h3 {
+      font-size: 36px;
+      color: white;
+      font-weight: 700;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .editar-container {
+      position: relative;
+      z-index: 1;
+      margin-top: 15px;
+    }
+
+    .editar-display {
+      color: rgba(255,255,255,0.9);
+      font-size: 16px;
+      line-height: 1.5;
+      font-style: italic;
+      max-width: 600px;
+      margin: 0 auto;
+      word-wrap: break-word;
+    }
+
+    .editar-display.vacia {
+      opacity: 0.5;
+    }
+
+    .editar-form {
+      display: none;
+      margin-top: 15px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .form-input {
+      width: 100%;
+      min-height: 48px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px;
+      color: white;
+      font-family: inherit;
+      font-size: 16px;
+      padding: 12px 18px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-input::placeholder {
+      color: rgba(255,255,255,0.5);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: rgba(100, 181, 246, 0.8);
+      box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2), 0 8px 25px rgba(0,0,0,0.2);
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-1px);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    /* Botones actualizados con estilo azul para guardar */
+    .btn {
+      margin: 6px; 
+      padding: 12px 20px; 
+      border: none; 
+      color: #fff; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover { 
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    }
+    
+    .btn-primary:hover { 
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    
+    .btn-secondary:hover { 
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .contador-caracteres {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .contador-caracteres.limite {
+      color: rgba(239, 68, 68, 0.8);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .perfil-content {
+      padding: 40px 30px;
+    }
+
+    .perfil-datos p {
+      font-size: 16px;
+      margin: 20px 0;
+      color: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .perfil-datos p:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateX(5px);
+    }
+
+    .contador {
+      font-weight: 600;
+      font-size: 18px;
+      margin: 20px 0;
+      color: rgba(255,255,255,0.95);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .contador span {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+    }
+
+    #btnSeguir {
+      margin-top: 30px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      color: white;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #btnSeguir::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    #btnSeguir:hover::before {
+      left: 100%;
+    }
+
+    #btnSeguir:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    #btnSeguir.dejar {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    #btnSeguir.dejar:hover {
+      box-shadow: 0 15px 30px rgba(239, 68, 68, 0.5);
+    }
+
+    .edit-buttons {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .perfil-card { margin: 20px; }
+      .perfil-header { padding: 40px 20px; }
+      .perfil-content { padding: 25px; }
+      .perfil-header h3 { font-size: 28px; }
+      .header h2 { font-size: 24px; }
+      .form-input { max-width: 100%; }
+      .editar-form { max-width: 100%; }
+      .edit-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      .btn-edit {
+        width: 200px;
+        justify-content: center;
+      }
+      .form-actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>👤 Perfil de Usuario</h2>
+    <a href="home.html"><button class="logout-btn">Volver</button></a>
+  </div>
+
+  <div class="perfil-card">
+    <div class="perfil-header">
+      <h3 id="nombrePerfil">Nombre</h3>
+      
+      <!-- Biografía -->
+      <div class="editar-container">
+        <div id="biografiaDisplay" class="editar-display vacia">Sin biografía</div>
+        <div id="biografiaEdit" class="editar-form">
+          <textarea id="biografiaTextarea" class="form-input form-textarea" placeholder="Escribe algo sobre ti..." maxlength="500"></textarea>
+          <div id="contadorCaracteres" class="contador-caracteres">0/500</div>
+          <div class="form-actions">
+            <button id="btnGuardarBiografia" class="btn btn-primary">💾 Guardar</button>
+            <button id="btnCancelarBiografia" class="btn btn-secondary">❌ Cancelar</button>
+          </div>
+        </div>
+        <div class="edit-buttons">
+          <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
+          <button id="btnEditarNombre" class="btn-edit" style="display: none;">👤 Editar nombre</button>
+          <button id="btnEditarContrasena" class="btn-edit" style="display: none;">🔒 Cambiar contraseña</button>
+        </div>
+      </div>
+
+      <!-- Editar Nombre -->
+      <div id="nombreEdit" class="editar-form">
+        <input id="nombreInput" class="form-input" placeholder="Nuevo nombre de usuario" maxlength="50">
+        <div class="form-actions">
+          <button id="btnGuardarNombre" class="btn btn-primary">💾 Guardar</button>
+          <button id="btnCancelarNombre" class="btn btn-secondary">❌ Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Editar Contraseña -->
+      <div id="contrasenaEdit" class="editar-form">
+        <input id="contrasenaActual" type="password" class="form-input" placeholder="Contraseña actual">
+        <input id="contrasenaNueva" type="password" class="form-input" placeholder="Nueva contraseña">
+        <input id="contrasenaConfirmar" type="password" class="form-input" placeholder="Confirmar nueva contraseña">
+        <div class="form-actions">
+          <button id="btnGuardarContrasena" class="btn btn-primary">💾 Guardar</button>
+          <button id="btnCancelarContrasena" class="btn btn-secondary">❌ Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="perfil-content">
+      <div class="perfil-datos">
+        <p>📅 Registrado desde: <span id="fechaPerfil"></span></p>
+        
+        <button id="btnSeguir" style="display:none">Seguir</button>
+        
+        <p class="contador">👥 Seguidores: <span id="contadorSeguidores">0</span></p>
+        <p class="contador">➡️ Siguiendo: <span id="contadorSiguiendo">0</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let esPerfilPropio = false;
+    let usuarioActual = null;
+
+    // Elementos del DOM
+    const biografiaDisplay = document.getElementById('biografiaDisplay');
+    const biografiaEdit = document.getElementById('biografiaEdit');
+    const nombreEdit = document.getElementById('nombreEdit');
+    const contrasenaEdit = document.getElementById('contrasenaEdit');
+    
+    const biografiaTextarea = document.getElementById('biografiaTextarea');
+    const nombreInput = document.getElementById('nombreInput');
+    const contrasenaActual = document.getElementById('contrasenaActual');
+    const contrasenaNueva = document.getElementById('contrasenaNueva');
+    const contrasenaConfirmar = document.getElementById('contrasenaConfirmar');
+    
+    const btnEditarBiografia = document.getElementById('btnEditarBiografia');
+    const btnEditarNombre = document.getElementById('btnEditarNombre');
+    const btnEditarContrasena = document.getElementById('btnEditarContrasena');
+
+    // Event listeners
+    biografiaTextarea.addEventListener('input', actualizarContador);
+    
+    btnEditarBiografia.addEventListener('click', () => habilitarEdicion('biografia'));
+    btnEditarNombre.addEventListener('click', () => habilitarEdicion('nombre'));
+    btnEditarContrasena.addEventListener('click', () => habilitarEdicion('contrasena'));
+    
+    document.getElementById('btnGuardarBiografia').addEventListener('click', () => guardar('biografia'));
+    document.getElementById('btnGuardarNombre').addEventListener('click', () => guardar('nombre'));
+    document.getElementById('btnGuardarContrasena').addEventListener('click', () => guardar('contrasena'));
+    
+    document.getElementById('btnCancelarBiografia').addEventListener('click', () => cancelarEdicion('biografia'));
+    document.getElementById('btnCancelarNombre').addEventListener('click', () => cancelarEdicion('nombre'));
+    document.getElementById('btnCancelarContrasena').addEventListener('click', () => cancelarEdicion('contrasena'));
+
+    function actualizarContador() {
+      const longitud = biografiaTextarea.value.length;
+      document.getElementById('contadorCaracteres').textContent = `${longitud}/500`;
+      document.getElementById('contadorCaracteres').classList.toggle('limite', longitud >= 450);
+    }
+
+    function habilitarEdicion(tipo) {
+      // Ocultar todos los formularios y botones
+      biografiaEdit.style.display = 'none';
+      nombreEdit.style.display = 'none';
+      contrasenaEdit.style.display = 'none';
+      
+      btnEditarBiografia.style.display = 'none';
+      btnEditarNombre.style.display = 'none';
+      btnEditarContrasena.style.display = 'none';
+
+      if (tipo === 'biografia') {
+        biografiaTextarea.value = biografiaDisplay.textContent === 'Sin biografía' ? '' : biografiaDisplay.textContent;
+        biografiaDisplay.style.display = 'none';
+        biografiaEdit.style.display = 'block';
+        biografiaTextarea.focus();
+        actualizarContador();
+      } else if (tipo === 'nombre') {
+        nombreInput.value = document.getElementById('nombrePerfil').textContent;
+        nombreEdit.style.display = 'block';
+        nombreInput.focus();
+      } else if (tipo === 'contrasena') {
+        contrasenaActual.value = '';
+        contrasenaNueva.value = '';
+        contrasenaConfirmar.value = '';
+        contrasenaEdit.style.display = 'block';
+        contrasenaActual.focus();
+      }
+    }
+
+    function cancelarEdicion(tipo) {
+      if (tipo === 'biografia') {
+        biografiaDisplay.style.display = 'block';
+        biografiaEdit.style.display = 'none';
+      } else if (tipo === 'nombre') {
+        nombreEdit.style.display = 'none';
+      } else if (tipo === 'contrasena') {
+        contrasenaEdit.style.display = 'none';
+      }
+      
+      btnEditarBiografia.style.display = 'inline-block';
+      btnEditarNombre.style.display = 'inline-block';
+      btnEditarContrasena.style.display = 'inline-block';
+    }
+
+    async function guardar(tipo) {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      
+      try {
+        let endpoint, data, successMsg;
+        
+        if (tipo === 'biografia') {
+          const nuevaBiografia = biografiaTextarea.value.trim();
+          endpoint = `/usuarios/${id}/biografia`;
+          data = { biografia: nuevaBiografia };
+          successMsg = '✅ Biografía actualizada';
+        } else if (tipo === 'nombre') {
+          const nuevoNombre = nombreInput.value.trim();
+          if (nuevoNombre.length < 3) {
+            return mostrarMensaje('❌ El nombre debe tener al menos 3 caracteres', 'error');
+          }
+          endpoint = `/usuarios/${id}/nombre`;
+          data = { nombre: nuevoNombre };
+          successMsg = '✅ Nombre actualizado';
+        } else if (tipo === 'contrasena') {
+          const actual = contrasenaActual.value.trim();
+          const nueva = contrasenaNueva.value.trim();
+          const confirmar = contrasenaConfirmar.value.trim();
+          
+          if (!actual || !nueva || !confirmar) {
+            return mostrarMensaje('❌ Todos los campos son requeridos', 'error');
+          }
+          if (nueva.length < 6) {
+            return mostrarMensaje('❌ La contraseña debe tener al menos 6 caracteres', 'error');
+          }
+          if (nueva !== confirmar) {
+            return mostrarMensaje('❌ Las contraseñas no coinciden', 'error');
+          }
+          
+          endpoint = `/usuarios/${id}/contrasena`;
+          data = { contrasenaActual: actual, contrasenaNueva: nueva };
+          successMsg = '✅ Contraseña actualizada';
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.mensaje || 'Error al actualizar');
+        }
+
+        // Actualizar la vista
+        if (tipo === 'biografia') {
+          const nuevaBiografia = biografiaTextarea.value.trim();
+          biografiaDisplay.textContent = nuevaBiografia || 'Sin biografía';
+          biografiaDisplay.classList.toggle('vacia', !nuevaBiografia);
+        } else if (tipo === 'nombre') {
+          document.getElementById('nombrePerfil').textContent = nombreInput.value.trim();
+        }
+
+        cancelarEdicion(tipo);
+        mostrarMensaje(successMsg, 'exito');
+        
+      } catch (error) {
+        mostrarMensaje('❌ ' + error.message, 'error');
+      }
+    }
+
+    function mostrarMensaje(texto, tipo) {
+      const mensaje = document.createElement('div');
+      mensaje.textContent = texto;
+      mensaje.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+        border-radius: 10px; color: white; font-weight: 600; z-index: 1000;
+        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        background: ${tipo === 'exito' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(mensaje);
+      setTimeout(() => {
+        mensaje.style.animation = 'slideOut 0.3s ease-in forwards';
+        setTimeout(() => mensaje.remove(), 300);
+      }, 3000);
+    }
+
+    // Estilos para animaciones
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    async function cargarPerfil() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) return;
+
+      try {
+        const res = await fetch('/usuarios/' + id);
+        if (!res.ok) throw new Error();
+        const usuario = await res.json();
+        
+        document.getElementById('nombrePerfil').textContent = usuario.nombre;
+        document.getElementById('fechaPerfil').textContent = new Date(usuario.fechaRegistro).toLocaleDateString();
+        document.getElementById('contadorSeguidores').textContent = usuario.seguidores.length;
+        document.getElementById('contadorSiguiendo').textContent = usuario.seguidos.length;
+
+        if (usuario.biografia && usuario.biografia.trim()) {
+          biografiaDisplay.textContent = usuario.biografia;
+          biografiaDisplay.classList.remove('vacia');
+        } else {
+          biografiaDisplay.textContent = 'Sin biografía';
+          biografiaDisplay.classList.add('vacia');
+        }
+
+        const sesion = await fetch('/usuarios/session');
+        if (!sesion.ok) return;
+        usuarioActual = await sesion.json();
+
+        if (usuarioActual._id === id) {
+          esPerfilPropio = true;
+          btnEditarBiografia.style.display = 'inline-block';
+          btnEditarNombre.style.display = 'inline-block';
+          btnEditarContrasena.style.display = 'inline-block';
+        } else {
+          esPerfilPropio = false;
+          const sigue = usuario.seguidores.some(seg => seg._id === usuarioActual._id);
+          const btn = document.getElementById('btnSeguir');
+          btn.style.display = 'inline-block';
+          btn.textContent = sigue ? 'Dejar de seguir' : 'Seguir';
+          btn.classList.toggle('dejar', sigue);
+          btn.onclick = async () => {
+            const res = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+            if (res.ok) cargarPerfil();
+          };
+        }
+      } catch (e) {
+        mostrarMensaje('❌ No se pudo cargar el perfil', 'error');
+        window.location.href = 'home.html';
+      }
+    }
+
+    cargarPerfil();
+    setInterval(() => {
+      if (!esPerfilPropio) cargarPerfil();
+    }, 3000);
+  </script>
+</body>
+</html>

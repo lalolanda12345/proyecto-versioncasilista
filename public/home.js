@@ -131,10 +131,30 @@ async function darLike(publicacionId) {
   }
 }
 
-// Cargar publicaciones al iniciar
-//cargarPublicaciones();
+// Buscar usuarios
+document.getElementById('busquedaUsuario').addEventListener('input', async (e) => {
+  const q = e.target.value.trim();
+  const resultados = document.getElementById('resultadosUsuarios');
+  resultados.innerHTML = '';
 
-// Actualizar publicaciones cada 3 segundos para simular tiempo real
-//setInterval(cargarPublicaciones, 3000);
+  if (q.length > 1) {
+    try {
+      const res = await fetch(`/usuarios/buscar?q=${encodeURIComponent(q)}`);
+      const usuarios = await res.json();
+
+      usuarios.forEach(u => {
+        const li = document.createElement('li');
+        li.textContent = u.nombre;
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', () => {
+          window.location.href = `perfil.html?id=${u._id}`;
+        });
+        resultados.appendChild(li);
+      });
+    } catch (error) {
+      console.error('Error al buscar usuarios:', error);
+    }
+  }
+});
 
 inicializar();

@@ -13,8 +13,13 @@ if (registroForm) {
     });
 
     const data = await res.json();
-    alert('✅ Usuario registrado: ' + data.nombre);
-    window.location.href = 'index.html';
+
+    if (res.ok) {
+      alert('✅ Usuario registrado: ' + data.nombre);
+      window.location.href = 'index.html';
+    } else {
+      alert('❌ ' + data.mensaje);
+    }
   });
 }
 

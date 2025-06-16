@@ -1,36 +1,1183 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <title>Inicio - Red Social</title>
-  <link rel="stylesheet" href="estilos.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body { 
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+      background-attachment: fixed;
+      color: #e0e6ed;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Efectos de luz radiante */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      animation: floating 20s ease-in-out infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes floating {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.1); }
+    }
+
+    /* Header con animación rotativa */
+    .header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff; 
+      padding: 20px; 
+      border-radius: 20px;
+      margin-bottom: 30px; 
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(99, 102, 241, 0.3) 90deg, transparent 180deg);
+      animation: rotate 4s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .header h2 {
+      position: relative;
+      z-index: 1;
+      font-weight: 700;
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Botones con efecto shimmer */
+    .logout-btn, .profile-btn {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+      color: #fff; 
+      border: none; 
+      padding: 12px 20px;
+      font-weight: 600; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logout-btn::before, .profile-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s;
+    }
+
+    .logout-btn:hover::before, .profile-btn:hover::before {
+      left: 100%;
+    }
+
+    .logout-btn:hover, .profile-btn:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    }
+
+    .content { 
+      display: grid; 
+      grid-template-columns: 1fr 2fr; 
+      gap: 30px; 
+    }
+
+    /* Paneles con efectos glassmorphism */
+    .panel { 
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 24px; 
+      border-radius: 20px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    h3 { 
+      margin-bottom: 16px; 
+      color: #60a5fa; 
+      border-bottom: 2px solid rgba(99, 102, 241, 0.3); 
+      padding-bottom: 8px; 
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    input, textarea { 
+      width: 100%; 
+      padding: 14px 16px; 
+      margin-top: 12px; 
+      border: 2px solid rgba(255, 255, 255, 0.1); 
+      border-radius: 12px; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      resize: vertical;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e6ed;
+      font-size: 14px;
+    }
+
+    input:focus, textarea:focus { 
+      border-color: #60a5fa; 
+      outline: none;
+      box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    /* Botones con gradientes y animaciones */
+    .btn { 
+      margin: 6px; 
+      padding: 10px 18px; 
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      border: none; 
+      color: #fff; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      font-size: 13px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-edit { 
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .btn-edit:hover { 
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-delete { 
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .btn-delete:hover { 
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-comment { 
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+    .btn-comment:hover { 
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .user-list { 
+      list-style: none; 
+      margin-top: 12px; 
+    }
+
+    .user-list li { 
+      padding: 12px 16px; 
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+      cursor: pointer; 
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .user-list li:hover { 
+      background: rgba(99, 102, 241, 0.2);
+      transform: translateX(8px);
+    }
+
+    /* Posts con efectos mejorados */
+    .post { 
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px; 
+      margin-bottom: 20px; 
+      border-radius: 16px; 
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .post:hover { 
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .post-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 12px; 
+    }
+
+    .post-header strong {
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .post-date { 
+      font-size: 12px; 
+      color: #9ca3af; 
+    }
+
+    .post-content { 
+      margin: 12px 0; 
+      line-height: 1.6; 
+      color: #e0e6ed;
+    }
+
+    .post-footer { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-top: 12px; 
+    }
+
+    .post-actions { 
+      display: flex; 
+      gap: 6px; 
+    }
+
+    /* Botón de like con animación */
+    .like-btn { 
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer; 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #e0e6ed;
+      font-weight: 500;
+    }
+
+    .like-btn:hover { 
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
+    }
+
+    .like-btn.liked { 
+      background: linear-gradient(135deg, #f472b6, #ec4899);
+      border-color: #f472b6;
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Comentarios con mejor diseño */
+    .comments { 
+      margin-top: 20px; 
+      padding-top: 20px; 
+      border-top: 1px solid rgba(255, 255, 255, 0.1); 
+      max-height: 350px; 
+      overflow-y: auto; 
+    }
+
+    .comment { 
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 16px; 
+      margin: 8px 0; 
+      border-radius: 12px; 
+      border-left: 3px solid #60a5fa;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .comment:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-4px);
+    }
+
+    .comment-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      font-size: 12px; 
+      color: #9ca3af; 
+      margin-bottom: 6px; 
+    }
+
+    .comment-header strong {
+      color: #60a5fa;
+    }
+
+    .comment-content { 
+      font-size: 14px; 
+      color: #e0e6ed;
+    }
+
+    .comment-form { 
+      display: flex; 
+      gap: 12px; 
+      margin-top: 12px; 
+      align-items: flex-end; 
+    }
+
+    .comment-input { 
+      flex: 1; 
+      margin: 0; 
+      min-height: 44px; 
+    }
+
+    .comment-btn { 
+      height: 44px; 
+      min-width: 100px;
+    }
+
+    .editing { 
+      background: rgba(255, 193, 7, 0.1) !important; 
+      border: 2px solid rgba(255, 193, 7, 0.3) !important;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px rgba(255, 193, 7, 0.3); }
+      to { box-shadow: 0 0 20px rgba(255, 193, 7, 0.5); }
+    }
+
+    /* Indicador de actualización mejorado */
+    .updating-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(99, 102, 241, 0.9));
+      backdrop-filter: blur(20px);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .updating-indicator.show { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .content { 
+        grid-template-columns: 1fr; 
+      }
+
+      .post-footer { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 12px; 
+      }
+
+      .comment-form { 
+        flex-direction: column; 
+      }
+
+      .header-actions { 
+        flex-direction: column; 
+        gap: 8px; 
+      }
+
+      .header h2 {
+        font-size: 1.5rem;
+      }
+
+      body {
+        padding: 15px;
+      }
+    }
+
+    /* Efectos adicionales para micro-interacciones */
+    .panel, .post, .comment {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Efecto de carga */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+      position: relative;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid #60a5fa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <div class="header">
-    <h2>Bienvenido a la Red Social</h2>
-    <button id="cerrarSesion" class="logout-btn">Cerrar Sesión</button>
-  </div>
+  <div class="updating-indicator" id="updateIndicator">Actualizando...</div>
   
-  <div class="content">
-    <div class="user-info">
-      <h3>Usuario: <span id="nombreUsuario"></span></h3>
-    </div>
-    
-    <div class="nueva-publicacion">
-      <h3>Nueva Publicación</h3>
-      <form id="publicacionForm">
-        <textarea id="contenido" placeholder="¿Qué estás pensando?" required></textarea>
-        <button type="submit">Publicar</button>
-      </form>
-    </div>
-    
-    <div class="publicaciones">
-      <h3>Publicaciones Recientes</h3>
-      <div id="listaPublicaciones"></div>
+  <div class="header">
+    <h2>Red Social</h2>
+    <div class="header-actions">
+      <button id="profileBtn" class="profile-btn">Mi Perfil</button>
+      <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
     </div>
   </div>
 
-  <script src="home.js"></script>
+  <div class="content">
+    <div>
+      <div class="panel">
+        <h3>Usuario</h3>
+        <p><strong id="userName"></strong></p>
+      </div>
+
+      <div class="panel">
+        <h3>Buscar Usuarios</h3>
+        <input type="text" id="searchUser" placeholder="Buscar por nombre" />
+        <ul id="userResults" class="user-list"></ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>Nueva Publicación</h3>
+        <form id="postForm">
+          <textarea id="postContent" rows="4" placeholder="¿Qué estás pensando?" required></textarea>
+          <button type="submit" class="btn">Publicar</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Publicaciones Recientes</h3>
+        <div id="postsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Estado global simplificado
+    const app = {
+      user: null,
+      posts: [],
+      editing: new Set(),
+      commentsOpen: new Set(),
+      commentsData: new Map(), // Cache de comentarios
+      loading: false,
+      updateInterval: null
+    };
+
+    // Utilidades
+    const utils = {
+      debounce(func, wait) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func(...args), wait);
+        };
+      },
+
+      showMessage(msg, type = 'info') {
+        const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+        alert(`${icons[type]} ${msg}`);
+      },
+
+      async apiCall(url, options = {}) {
+        try {
+          const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        } catch (error) {
+          console.error('API Error:', error);
+          throw error;
+        }
+      },
+
+      showUpdateIndicator() {
+        const indicator = document.getElementById('updateIndicator');
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 1000);
+      }
+    };
+
+    // Gestión de sesión mejorada
+    const auth = {
+      async checkSession() {
+        try {
+          const response = await fetch('/usuarios/session');
+          if (response.ok) {
+            app.user = await response.json();
+            document.getElementById('userName').textContent = app.user.nombre;
+            return true;
+          }
+          this.redirectToLogin();
+          return false;
+        } catch (error) {
+          console.error('Session check error:', error);
+          utils.showMessage('Error de conexión', 'error');
+          this.redirectToLogin();
+          return false;
+        }
+      },
+
+      async logout() {
+        try {
+          // Intentar cerrar sesión en el servidor si existe el endpoint
+          try {
+            await fetch('/usuarios/logout', { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+          } catch (serverError) {
+            // Si no existe el endpoint, solo limpiar del lado del cliente
+            console.log('Logout endpoint not found, clearing client session');
+          }
+
+          // Limpiar estado local
+          this.clearSession();
+          utils.showMessage('Sesión cerrada correctamente', 'success');
+          
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Aún así, limpiar la sesión local
+          this.clearSession();
+          utils.showMessage('Sesión cerrada (error en servidor)', 'info');
+        }
+        
+        // Siempre redirigir al login
+        this.redirectToLogin();
+      },
+
+      clearSession() {
+        // Limpiar estado de la aplicación
+        app.user = null;
+        app.posts = [];
+        app.editing.clear();
+        app.commentsOpen.clear();
+        app.commentsData.clear();
+        
+        // Detener auto-actualización
+        autoUpdate.stop();
+        
+        // Limpiar cualquier token o dato de sesión que puedas tener
+        // (esto depende de cómo manejes la autenticación)
+        try {
+          // Si usas cookies de sesión, puedes intentar limpiarlas
+          document.cookie.split(";").forEach(cookie => {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            if (name) {
+              document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            }
+          });
+        } catch (cookieError) {
+          console.log('Cookie cleanup not needed or failed');
+        }
+      },
+
+      redirectToLogin() {
+        // Dar un pequeño delay para que se vea el mensaje
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 500);
+      }
+    };
+
+    // Gestión de publicaciones
+    const posts = {
+      async load(silent = false) {
+        if (app.loading) return;
+
+        try {
+          app.loading = true;
+          if (!silent) utils.showUpdateIndicator();
+          
+          const newPosts = await utils.apiCall('/publicaciones');
+          
+          // Solo actualizar si hay cambios reales
+          const hasChanges = this.hasPostsChanged(newPosts);
+          if (hasChanges) {
+            app.posts = newPosts;
+            this.smartRender();
+          }
+        } catch (error) {
+          if (!silent) utils.showMessage('Error al cargar publicaciones', 'error');
+        } finally {
+          app.loading = false;
+        }
+      },
+
+      hasPostsChanged(newPosts) {
+        if (app.posts.length !== newPosts.length) return true;
+        
+        for (let i = 0; i < newPosts.length; i++) {
+          const oldPost = app.posts[i];
+          const newPost = newPosts[i];
+          
+          if (!oldPost || 
+              oldPost._id !== newPost._id ||
+              oldPost.contenido !== newPost.contenido ||
+              oldPost.likes !== newPost.likes ||
+              oldPost.comentarios !== newPost.comentarios) {
+            return true;
+          }
+        }
+        return false;
+      },
+
+      smartRender() {
+        const container = document.getElementById('postsList');
+        const currentPosts = new Set(Array.from(container.children).map(el => el.dataset.id));
+        
+        // Actualizar posts existentes y agregar nuevos
+        app.posts.forEach((post, index) => {
+          const existingPost = document.querySelector(`[data-id="${post._id}"]`);
+          
+          if (existingPost && !app.editing.has(post._id)) {
+            // Actualizar post existente sin tocar comentarios
+            this.updatePostElement(existingPost, post);
+          } else if (!existingPost) {
+            // Agregar nuevo post
+            const postHTML = this.createPostHTML(post);
+            if (index === 0) {
+              container.insertAdjacentHTML('afterbegin', postHTML);
+            } else {
+              const nextPost = container.children[index];
+              if (nextPost) {
+                nextPost.insertAdjacentHTML('beforebegin', postHTML);
+              } else {
+                container.insertAdjacentHTML('beforeend', postHTML);
+              }
+            }
+          }
+        });
+
+        // Remover posts que ya no existen
+        const newPostIds = new Set(app.posts.map(p => p._id));
+        currentPosts.forEach(postId => {
+          if (!newPostIds.has(postId)) {
+            const postElement = document.querySelector(`[data-id="${postId}"]`);
+            if (postElement) {
+              postElement.remove();
+              app.editing.delete(postId);
+              app.commentsOpen.delete(postId);
+              app.commentsData.delete(postId);
+            }
+          }
+        });
+
+        // Restaurar comentarios abiertos
+        this.restoreCommentsState();
+      },
+
+      updatePostElement(element, post) {
+        // Actualizar solo los elementos que pueden cambiar
+        const liked = post.usuariosQueDieronLike?.includes(app.user._id);
+        
+        // Actualizar botón de like
+        const likeBtn = element.querySelector('.like-btn');
+        if (likeBtn) {
+          likeBtn.className = `like-btn ${liked ? 'liked' : ''}`;
+          likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} ${post.likes}`;
+        }
+
+        // Actualizar contador de comentarios
+        const commentBtn = element.querySelector('.btn-comment');
+        if (commentBtn) {
+          commentBtn.innerHTML = `💬 ${post.comentarios}`;
+        }
+
+        // Actualizar contenido si no está en edición
+        if (!app.editing.has(post._id)) {
+          const contentDiv = element.querySelector(`#content-${post._id}`);
+          if (contentDiv && !contentDiv.querySelector('textarea')) {
+            contentDiv.textContent = post.contenido;
+          }
+        }
+      },
+
+      restoreCommentsState() {
+        app.commentsOpen.forEach(postId => {
+          const commentsDiv = document.getElementById(`comments-${postId}`);
+          if (commentsDiv) {
+            commentsDiv.style.display = 'block';
+            // Restaurar comentarios desde cache si existen
+            if (app.commentsData.has(postId)) {
+              this.renderComments(postId, app.commentsData.get(postId));
+            } else {
+              // Recargar comentarios solo si no están en cache
+              comments.load(postId);
+            }
+          }
+        });
+      },
+
+      renderComments(postId, commentsArray) {
+        const container = document.getElementById(`comments-list-${postId}`);
+        if (container) {
+          container.innerHTML = commentsArray.map(c => `
+            <div class="comment">
+              <div class="comment-header">
+                <strong>${c.usuario?.nombre}</strong>
+                <span>${new Date(c.fecha).toLocaleString()}</span>
+                ${c.usuario?._id === app.user._id ? `
+                  <button class="btn btn-delete" style="padding:2px 6px;font-size:10px" onclick="comments.delete('${c._id}', '${postId}')">×</button>
+                ` : ''}
+              </div>
+              <div class="comment-content">${c.contenido}</div>
+            </div>
+          `).join('');
+        }
+      },
+
+      render() {
+        const container = document.getElementById('postsList');
+        container.innerHTML = app.posts.map(post => this.createPostHTML(post)).join('');
+        this.restoreCommentsState();
+      },
+
+      createPostHTML(post) {
+        const liked = post.usuariosQueDieronLike?.includes(app.user._id);
+        const isOwner = post.usuario?._id === app.user._id;
+        const isEditing = app.editing.has(post._id);
+        const commentsVisible = app.commentsOpen.has(post._id);
+
+        return `
+          <div class="post ${isEditing ? 'editing' : ''}" data-id="${post._id}">
+            <div class="post-header">
+              <strong>${post.usuario?.nombre || 'Usuario'}</strong>
+              <span class="post-date">${new Date(post.fecha).toLocaleString()}</span>
+            </div>
+
+            <div class="post-content" id="content-${post._id}">
+              ${isEditing ? `
+                <textarea id="edit-${post._id}" rows="3">${post.contenido}</textarea>
+                <div style="margin-top:10px">
+                  <button class="btn" onclick="posts.saveEdit('${post._id}')">💾 Guardar</button>
+                  <button class="btn btn-delete" onclick="posts.cancelEdit('${post._id}')">❌ Cancelar</button>
+                </div>
+              ` : post.contenido}
+            </div>
+
+            <div class="post-footer">
+              <div>
+                <button class="like-btn ${liked ? 'liked' : ''}" onclick="posts.toggleLike('${post._id}')">
+                  ${liked ? '❤️' : '🤍'} ${post.likes}
+                </button>
+                <button class="btn btn-comment" onclick="comments.toggle('${post._id}')">
+                  💬 ${post.comentarios}
+                </button>
+              </div>
+              ${isOwner ? `
+                <div class="post-actions">
+                  <button class="btn btn-edit" onclick="posts.startEdit('${post._id}')" style="${isEditing ? 'display:none' : ''}">✏️</button>
+                  <button class="btn btn-delete" onclick="posts.delete('${post._id}')">🗑️</button>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="comments" id="comments-${post._id}" style="display:${commentsVisible ? 'block' : 'none'}">
+              <div id="comments-list-${post._id}"></div>
+              <div class="comment-form">
+                <textarea class="comment-input" id="comment-input-${post._id}" placeholder="Escribe un comentario..." rows="2"></textarea>
+                <button class="btn comment-btn" onclick="comments.create('${post._id}')">Comentar</button>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      async create(content) {
+        try {
+          await utils.apiCall('/publicaciones', {
+            method: 'POST',
+            body: JSON.stringify({ usuario: app.user._id, contenido: content })
+          });
+
+          utils.showMessage('Publicación creada', 'success');
+          document.getElementById('postContent').value = '';
+          this.load();
+        } catch (error) {
+          utils.showMessage('Error al crear publicación', 'error');
+        }
+      },
+
+      async toggleLike(postId) {
+        try {
+          const result = await utils.apiCall(`/publicaciones/${postId}/like`, {
+            method: 'POST',
+            body: JSON.stringify({ usuarioId: app.user._id })
+          });
+
+          // Actualizar en memoria
+          const postIndex = app.posts.findIndex(p => p._id === postId);
+          if (postIndex !== -1) {
+            app.posts[postIndex] = { ...app.posts[postIndex], ...result };
+          }
+
+          // Actualizar botón inmediatamente
+          const liked = result.usuariosQueDieronLike?.includes(app.user._id);
+          const btn = document.querySelector(`[data-id="${postId}"] .like-btn`);
+          if (btn) {
+            btn.className = `like-btn ${liked ? 'liked' : ''}`;
+            btn.innerHTML = `${liked ? '❤️' : '🤍'} ${result.likes}`;
+          }
+        } catch (error) {
+          utils.showMessage('Error al dar like', 'error');
+        }
+      },
+
+      startEdit(postId) {
+        app.editing.add(postId);
+        this.render();
+        document.getElementById(`edit-${postId}`).focus();
+      },
+
+      async saveEdit(postId) {
+        const newContent = document.getElementById(`edit-${postId}`).value.trim();
+        if (!newContent) return;
+
+        try {
+          await utils.apiCall(`/publicaciones/${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ contenido: newContent, usuarioId: app.user._id })
+          });
+
+          // Actualizar en memoria
+          const post = app.posts.find(p => p._id === postId);
+          if (post) post.contenido = newContent;
+
+          app.editing.delete(postId);
+          utils.showMessage('Publicación actualizada', 'success');
+          this.render();
+        } catch (error) {
+          utils.showMessage('Error al actualizar', 'error');
+        }
+      },
+
+      cancelEdit(postId) {
+        app.editing.delete(postId);
+        this.render();
+      },
+
+      async delete(postId) {
+        if (!confirm('¿Eliminar publicación?')) return;
+
+        try {
+          await utils.apiCall(`/publicaciones/${postId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ usuarioId: app.user._id })
+          });
+
+          app.posts = app.posts.filter(p => p._id !== postId);
+          app.editing.delete(postId);
+          app.commentsOpen.delete(postId);
+          app.commentsData.delete(postId);
+
+          utils.showMessage('Publicación eliminada', 'success');
+          this.render();
+        } catch (error) {
+          utils.showMessage('Error al eliminar', 'error');
+        }
+      }
+    };
+
+    // Gestión de comentarios
+    const comments = {
+      async toggle(postId) {
+        const commentsDiv = document.getElementById(`comments-${postId}`);
+        const isVisible = app.commentsOpen.has(postId);
+
+        if (isVisible) {
+          commentsDiv.style.display = 'none';
+          app.commentsOpen.delete(postId);
+        } else {
+          commentsDiv.style.display = 'block';
+          app.commentsOpen.add(postId);
+          await this.load(postId);
+        }
+      },
+
+      async load(postId) {
+        try {
+          const commentsArray = await utils.apiCall(`/comentarios/publicacion/${postId}`);
+          
+          // Guardar en cache
+          app.commentsData.set(postId, commentsArray);
+          
+          // Renderizar
+          posts.renderComments(postId, commentsArray);
+        } catch (error) {
+          console.error('Error loading comments:', error);
+        }
+      },
+
+      async create(postId) {
+        const input = document.getElementById(`comment-input-${postId}`);
+        const content = input.value.trim();
+        if (!content) return;
+
+        try {
+          await utils.apiCall('/comentarios', {
+            method: 'POST',
+            body: JSON.stringify({
+              publicacion: postId,
+              usuario: app.user._id,
+              contenido: content
+            })
+          });
+
+          input.value = '';
+          
+          // Recargar comentarios y actualizar cache
+          await this.load(postId);
+
+          // Actualizar contador inmediatamente
+          const post = app.posts.find(p => p._id === postId);
+          if (post) {
+            post.comentarios++;
+            const btn = document.querySelector(`[data-id="${postId}"] .btn-comment`);
+            if (btn) {
+              btn.innerHTML = `💬 ${post.comentarios}`;
+            }
+          }
+        } catch (error) {
+          utils.showMessage('Error al comentar', 'error');
+        }
+      },
+
+      async delete(commentId, postId) {
+        if (!confirm('¿Eliminar comentario?')) return;
+
+        try {
+          await utils.apiCall(`/comentarios/${commentId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ usuarioId: app.user._id })
+          });
+
+          // Recargar comentarios y actualizar cache
+          await this.load(postId);
+
+          // Actualizar contador inmediatamente
+          const post = app.posts.find(p => p._id === postId);
+          if (post) {
+            post.comentarios--;
+            const btn = document.querySelector(`[data-id="${postId}"] .btn-comment`);
+            if (btn) {
+              btn.innerHTML = `💬 ${post.comentarios}`;
+            }
+          }
+        } catch (error) {
+          utils.showMessage('Error al eliminar', 'error');
+        }
+      }
+    };
+
+    // Búsqueda de usuarios
+    const search = {
+      async find(query) {
+        const results = document.getElementById('userResults');
+        results.innerHTML = '';
+
+        if (query.length < 2) return;
+
+        try {
+          const users = await utils.apiCall(`/usuarios/buscar?q=${encodeURIComponent(query)}`);
+          users.forEach(user => {
+            const li = document.createElement('li');
+            li.textContent = user.nombre;
+            li.onclick = () => window.location.href = `perfil.html?id=${user._id}`;
+            results.appendChild(li);
+          });
+        } catch (error) {
+          console.error('Search error:', error);
+        }
+      }
+    };
+
+    // Auto-actualización mejorada
+    const autoUpdate = {
+      start() {
+        this.stop();
+        app.updateInterval = setInterval(() => {
+          if (app.editing.size === 0 && !app.loading) {
+            posts.load(true); // Actualización silenciosa
+          }
+        }, 10000);
+      },
+
+      stop() {
+        if (app.updateInterval) {
+          clearInterval(app.updateInterval);
+          app.updateInterval = null;
+        }
+      }
+    };
+
+    // Inicialización
+    async function init() {
+      // Verificar sesión
+      if (!(await auth.checkSession())) return;
+
+      // Event listeners
+      document.getElementById('logoutBtn').onclick = () => {
+        // Confirmar antes de cerrar sesión
+        if (confirm('¿Estás seguro que quieres cerrar sesión?')) {
+          auth.logout();
+        }
+      };
+
+      // Botón para ir al perfil propio
+      document.getElementById('profileBtn').onclick = () => {
+        window.location.href = `perfil.html?id=${app.user._id}`;
+      };
+
+      document.getElementById('postForm').onsubmit = (e) => {
+        e.preventDefault();
+        const content = document.getElementById('postContent').value.trim();
+        if (content) posts.create(content);
+      };
+
+      document.getElementById('searchUser').oninput = utils.debounce((e) => {
+        search.find(e.target.value.trim());
+      }, 300);
+
+      // Gestión de visibilidad
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          autoUpdate.stop();
+        } else {
+          autoUpdate.start();
+          posts.load(true);
+        }
+      });
+
+      // Cargar datos iniciales
+      await posts.load();
+      autoUpdate.start();
+    }
+
+    // Iniciar aplicación
+    init();
+  </script>
 </body>
 </html>
