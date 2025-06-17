@@ -467,6 +467,7 @@
         
         <p class="contador">👥 Seguidores: <span id="contadorSeguidores">0</span></p>
         <p class="contador">➡️ Siguiendo: <span id="contadorSiguiendo">0</span></p>
+        <button id="btnEnviarMensaje" class="btn btn-primary" style="display:none; margin-top: 10px; width:100%;">✉️ Enviar Mensaje</button>
       </div>
     </div>
   </div>
@@ -476,6 +477,7 @@
     let usuarioActual = null;
 
     // Elementos del DOM
+    const btnEnviarMensaje = document.getElementById('btnEnviarMensaje');
     const biografiaDisplay = document.getElementById('biografiaDisplay');
     const biografiaEdit = document.getElementById('biografiaEdit');
     const nombreEdit = document.getElementById('nombreEdit');
@@ -490,6 +492,7 @@
     const btnEditarBiografia = document.getElementById('btnEditarBiografia');
     const btnEditarNombre = document.getElementById('btnEditarNombre');
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
+    
 
     // Event listeners
     biografiaTextarea.addEventListener('input', actualizarContador);
@@ -665,9 +668,22 @@
           btn.classList.toggle('dejar', sigue);
           btn.onclick = async () => {
             const res = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-            if (res.ok) cargarPerfil();
+            if (res.ok) cargarPerfil(); // Recargar para actualizar estado del botón y contadores
           };
         }
+
+        // Lógica para el botón de Enviar Mensaje
+        if (usuarioActual && usuarioActual._id !== id) { // Si es el perfil de otro usuario
+            if(btnEnviarMensaje) {
+                btnEnviarMensaje.style.display = 'block'; // O 'inline-block' o lo que corresponda a .btn
+                btnEnviarMensaje.onclick = () => {
+                    window.location.href = `mensajes.html?chatWith=${id}&chatWithNombre=${encodeURIComponent(usuario.nombre)}`;
+                };
+            }
+        } else if (btnEnviarMensaje) { // Si es el perfil propio o no se pudo determinar usuarioActual
+            btnEnviarMensaje.style.display = 'none';
+        }
+
       } catch (e) {
         showNotification('No se pudo cargar el perfil', 'error');
         window.location.href = 'home.html';

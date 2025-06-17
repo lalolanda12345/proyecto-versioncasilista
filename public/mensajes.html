@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mensajes - Red Social</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Basic styles from home.html will be copied here in a later step */
+    /* For now, include some very basic body styling for structure */
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+    }
+    body { 
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+      background-attachment: fixed;
+      color: #e0e6ed;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before { /* Radiant light effects */
+      content: '';
+      position: fixed;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      animation: floating 20s ease-in-out infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+    @keyframes floating { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.1); } }
+
+    .header { /* Copied from home.html for consistency */
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff; 
+      padding: 20px; 
+      border-radius: 20px;
+      margin-bottom: 30px; 
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before { /* Header animation */
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(99, 102, 241, 0.3) 90deg, transparent 180deg);
+      animation: rotate 4s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .header h2 { position: relative; z-index: 1; font-weight: 700; font-size: 1.8rem; background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header-actions { display: flex; gap: 12px; position: relative; z-index: 1; }
+    .logout-btn, .profile-btn, .home-btn, .messages-btn { /* Added .home-btn, .messages-btn */
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+      color: #fff; border: none; padding: 12px 20px; font-weight: 600; border-radius: 12px; cursor: pointer; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
+    }
+    .logout-btn::before, .profile-btn::before, .home-btn::before, .messages-btn::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s;
+    }
+    .logout-btn:hover::before, .profile-btn:hover::before, .home-btn:hover::before, .messages-btn:hover::before { left: 100%; }
+    .logout-btn:hover, .profile-btn:hover, .home-btn:hover, .messages-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); }
+
+    .content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
+    .panel { 
+      background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 24px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .panel:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); border-color: rgba(99, 102, 241, 0.3); }
+    h3 { margin-bottom: 16px; color: #60a5fa; border-bottom: 2px solid rgba(99, 102, 241, 0.3); padding-bottom: 8px; font-weight: 600; font-size: 1.1rem; }
+    .user-list { list-style: none; margin-top: 12px; }
+    .user-list li { 
+      padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; 
+      border-radius: 8px; margin-bottom: 4px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .user-list li:hover { background: rgba(99, 102, 241, 0.2); transform: translateX(8px); }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) { .content { grid-template-columns: 1fr; } .header-actions { flex-direction: column; gap: 8px; } .header h2 { font-size: 1.5rem; } body { padding: 15px; } }
+    
+    /* Styles for chat elements will be moved/added here later */
+    /* Copied from previous step for chat elements, to be refined in styling step */
+    .chat-messages-area { height: 400px; /* Adjusted height */ overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 12px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .chat-input-area { display: flex; gap: 10px; align-items: flex-end; }
+    #chatMessageInput { flex-grow: 1; min-height: 44px; resize: none; /* Assuming general input styles are present */ width: 100%; padding: 14px 16px; margin-top: 12px; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); resize: vertical; background: rgba(255, 255, 255, 0.05); color: #e0e6ed; font-size: 14px;}
+    #chatMessageInput:focus { border-color: #60a5fa; outline: none; box-shadow: 0 0 20px rgba(96, 165, 250, 0.3); background: rgba(255, 255, 255, 0.08); }
+    #chatMessageInput::placeholder { color: #9ca3af; }
+    .btn { margin: 6px; padding: 10px 18px; background: linear-gradient(135deg, #60a5fa, #3b82f6); border: none; color: #fff; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 13px; position: relative; overflow: hidden; }
+    .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); transition: left 0.6s; }
+    .btn:hover::before { left: 100%; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); }
+    #sendChatMessageBtn { height: 44px; min-width: 90px; margin-top:12px; /* Align with textarea's margin-top */ }
+    /* Scrollbar and other common styles will be added in the styling step */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #60a5fa, #3b82f6); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .updating-indicator { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(99, 102, 241, 0.9)); backdrop-filter: blur(20px); color: white; padding: 12px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; border: 1px solid rgba(255, 255, 255, 0.2); }
+    .updating-indicator.show { opacity: 1; transform: translateY(0); }
+    #logoutModal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+    .logout-modal-content { background: linear-gradient(135deg, #1a0a2e, #16213e); margin: 15% auto; padding: 30px; border: 1px solid rgba(255, 255, 255, 0.1); width: 80%; max-width: 450px; text-align: center; border-radius: 20px; color: #e0e6ed; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); animation: fadeInModal 0.3s ease-out; }
+    @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .logout-modal-content p { font-size: 1.2em; margin-bottom: 25px; line-height: 1.6; }
+    .logout-modal-content .btn { margin: 5px; padding: 12px 25px; font-size: 14px; }
+    #confirmLogoutBtn { background: linear-gradient(135deg, #ef4444, #dc2626); } #confirmLogoutBtn:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5); }
+    #cancelLogoutBtn { background: linear-gradient(135deg, #60a5fa, #3b82f6); } #cancelLogoutBtn:hover { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+
+  </style>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+  <div class="updating-indicator" id="updateIndicator">Actualizando...</div>
+
+  <div class="header">
+    <h2>Mensajes</h2> <!-- Title changed to Mensajes -->
+    <div class="header-actions">
+      <button id="homeBtn" class="home-btn">Inicio</button> <!-- Home button -->
+      <button id="profileBtn" class="profile-btn">Mi Perfil</button>
+      <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- First column for conversations list -->
+    <div id="conversationsColumn">
+      <div class="panel" id="conversacionesPanel">
+        <h3>Conversaciones</h3>
+        <ul id="listaConversaciones" class="user-list">
+          <!-- Conversation items will be populated here by JS -->
+          <!-- Example: <li>Usuario Ejemplo (Último: Hola...)</li> -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Second column for the chat window -->
+    <div id="chatColumn">
+      <div class="panel" id="chatPanel" style="display: none;"> <!-- Initially hidden or shows a placeholder -->
+        <h3>Chat con <span id="chatUserName">Usuario</span></h3>
+        <div id="chatMessages" class="chat-messages-area">
+          <p id="chatPlaceholder" style="text-align:center; color:#9ca3af; padding-top: 50px;">Selecciona una conversación para empezar a chatear.</p>
+        </div>
+        <div class="chat-input-area">
+          <textarea id="chatMessageInput" rows="2" placeholder="Escribe un mensaje..."></textarea>
+          <button id="sendChatMessageBtn" class="btn">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="logoutModal">
+    <div class="logout-modal-content">
+      <p>¿Estás seguro que quieres cerrar sesión?</p>
+      <button id="confirmLogoutBtn" class="btn">Confirmar</button>
+      <button id="cancelLogoutBtn" class="btn">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    // Global app state
+    const app = {
+      user: null,
+      currentChatPartnerId: null,
+      currentChatPartnerName: null,
+      chatPollInterval: null,
+    };
+
+    // DOM Elements 
+    let listaConversacionesEl, chatPanelEl, chatUserNameEl, chatMessagesEl, chatMessageInputEl, sendChatMessageBtnEl, chatPlaceholderEl;
+    let homeBtnEl, profileBtnEl, logoutBtnEl, logoutModal, confirmLogoutBtn, cancelLogoutBtn, updateIndicator;
+
+    // [FROM HOME.HTML] Full 'utils' object definition:
+    const utils = {
+     debounce(func, wait) {
+       let timeout;
+       return (...args) => {
+         clearTimeout(timeout);
+         timeout = setTimeout(() => func(...args), wait);
+       };
+     },
+     showMessage(msg, type = 'info') {
+       // Assumes showNotification is available globally from notifications.js
+       if (typeof showNotification === 'function') {
+         showNotification(msg, type);
+       } else {
+         console.warn('showNotification not available, logging to console:', msg);
+       }
+     },
+     async apiCall(url, options = {}) {
+       try {
+         const response = await fetch(url, {
+           headers: { 'Content-Type': 'application/json' },
+           ...options
+         });
+         if (!response.ok) {
+           const errorData = await response.text(); // Try to get more error info
+           console.error('API Error Data:', errorData);
+           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+         }
+         // Check if response is JSON before parsing
+         const contentType = response.headers.get("content-type");
+         if (contentType && contentType.indexOf("application/json") !== -1) {
+            return response.json();
+         } else {
+            return response.text(); // Return as text if not JSON (e.g. for logout)
+         }
+       } catch (error) {
+         console.error('API Call Error:', error);
+         // utils.showMessage(`Error en la solicitud: ${error.message}`, 'error'); // Avoid infinite loop if showMessage calls apiCall
+         throw error;
+       }
+     },
+     showUpdateIndicator() {
+       if(updateIndicator) { // updateIndicator should be assigned in init
+           updateIndicator.classList.add('show');
+           setTimeout(() => updateIndicator.classList.remove('show'), 1000);
+       }
+     }
+   };
+
+   // [FROM HOME.HTML] Full 'auth' object definition:
+   const auth = {
+     async checkSession() {
+       try {
+         const response = await fetch('/usuarios/session');
+         if (response.ok) {
+           app.user = await response.json();
+           return true;
+         }
+         this.redirectToLogin();
+         return false;
+       } catch (error) {
+         console.error('Session check error:', error);
+         utils.showMessage('Error de conexión, redirigiendo al login.', 'error');
+         this.redirectToLogin();
+         return false;
+       }
+     },
+     async logout() {
+       try {
+         await utils.apiCall('/usuarios/logout', { method: 'POST' });
+         utils.showMessage('Sesión cerrada correctamente', 'success');
+       } catch (error) {
+         // Error already logged by apiCall, utils.showMessage might have been called too.
+         // utils.showMessage('Error al cerrar sesión en servidor', 'warning');
+       } finally {
+         this.clearSession(); // Perform client-side cleanup regardless of server response
+         this.redirectToLogin();
+       }
+     },
+     clearSession() {
+       app.user = null;
+       app.currentChatPartnerId = null;
+       app.currentChatPartnerName = null;
+       if (chat && typeof chat.stopPollingMessages === 'function') { // Ensure chat exists and has the method
+            chat.stopPollingMessages();
+       } else if (app.chatPollInterval) { // Fallback if chat object isn't fully initialized
+            clearInterval(app.chatPollInterval);
+            app.chatPollInterval = null;
+       }
+       
+       try {
+         document.cookie.split(";").forEach(cookie => {
+           const eqPos = cookie.indexOf("=");
+           const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+           if (name) { document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; }
+         });
+       } catch (cookieError) { console.log('Cookie cleanup not needed or failed'); }
+
+       if(chatPanelEl) chatPanelEl.style.display = 'none';
+       if(listaConversacionesEl) listaConversacionesEl.innerHTML = '';
+       if(chatMessagesEl) chatMessagesEl.innerHTML = '';
+       if(chatUserNameEl) chatUserNameEl.textContent = 'Usuario';
+       if(chatPlaceholderEl) chatPlaceholderEl.style.display = 'block';
+     },
+     redirectToLogin() {
+       // Add a slight delay to allow any messages (like logout success) to be seen
+       setTimeout(() => { window.location.href = 'index.html'; }, 500);
+     }
+   };
+
+   // [FROM HOME.HTML, with minor adaptations if needed] Full 'chat' object:
+   const chat = {
+     async loadConversations() {
+       if (!app.user || !listaConversacionesEl) return;
+       try {
+         utils.showUpdateIndicator();
+         const conversations = await utils.apiCall('/mensajes/conversaciones');
+         listaConversacionesEl.innerHTML = ''; 
+         if (conversations.length === 0) {
+           listaConversacionesEl.innerHTML = '<li style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important; background: transparent !important; border: none !important;">No tienes conversaciones activas.</li>';
+           return;
+         }
+         conversations.forEach(conv => {
+           const li = document.createElement('li');
+           li.style.cursor = 'pointer';
+           li.innerHTML = `
+             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="flex-grow: 1;">
+                  <strong style="color: #e0e6ed;">${conv.otroUsuario.nombre}</strong>
+                  <small style="display:block; color: #9ca3af; font-size:0.8em;">
+                    ${conv.esEmisor ? 'Tú: ' : ''}${conv.ultimoMensaje.substring(0, 25)}${conv.ultimoMensaje.length > 25 ? '...' : ''}
+                  </small>
+                </div>
+                <small style="color: #9ca3af; font-size:0.75em; flex-shrink: 0;">${new Date(conv.fechaEnvio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+             </div>
+           `;
+           li.dataset.userId = conv.otroUsuario._id;
+           li.dataset.userName = conv.otroUsuario.nombre;
+           li.onclick = () => this.openChat(conv.otroUsuario._id, conv.otroUsuario.nombre);
+           listaConversacionesEl.appendChild(li);
+         });
+       } catch (error) {
+         console.error('Error loading conversations:', error);
+         // utils.showMessage('Error al cargar conversaciones', 'error'); // Already handled by apiCall
+         if(listaConversacionesEl) listaConversacionesEl.innerHTML = '<li style="text-align:center; color:red;">Error al cargar conversaciones.</li>';
+       }
+     },
+
+     async openChat(userId, userName) {
+       if (!app.user) {
+         utils.showMessage('Debes iniciar sesión para chatear.', 'error');
+         return;
+       }
+       app.currentChatPartnerId = userId;
+       app.currentChatPartnerName = userName;
+
+       if(chatUserNameEl) chatUserNameEl.textContent = userName;
+       if(chatPanelEl) chatPanelEl.style.display = 'block';
+       const inputArea = document.querySelector('.chat-input-area');
+       if(inputArea) inputArea.style.display = 'flex'; // Make sure input area is visible
+
+       if (chatPlaceholderEl) chatPlaceholderEl.style.display = 'none';
+       if(chatMessagesEl) chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">Cargando mensajes...</p>';
+
+       await this.loadMessages();
+       this.startPollingMessages();
+       if(chatMessageInputEl) chatMessageInputEl.focus();
+       history.pushState(null, '', `mensajes.html?chatWith=${userId}&chatWithNombre=${encodeURIComponent(userName)}`);
+     },
+
+     async loadMessages(isPolling = false) {
+       if (!app.currentChatPartnerId || !app.user || !chatMessagesEl) return;
+       try {
+         const messages = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
+         
+         const currentMessageElements = chatMessagesEl.querySelectorAll('div.chat-message');
+         const placeholderVisible = chatMessagesEl.querySelector('p[style*="text-align:center"]');
+
+         if (!isPolling || messages.length !== currentMessageElements.length || placeholderVisible) {
+            chatMessagesEl.innerHTML = ''; 
+            if (messages.length === 0) {
+                chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">No hay mensajes. ¡Envía el primero!</p>';
+            } else {
+                messages.forEach(msg => this.renderMessage(msg));
+            }
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; 
+         }
+       } catch (error) {
+         console.error('Error loading messages:', error);
+         if (!isPolling && chatMessagesEl) {
+            chatMessagesEl.innerHTML = '<p style="text-align:center; color:red;">Error al cargar mensajes. Intenta de nuevo.</p>';
+         }
+       }
+     },
+
+     renderMessage(msg) { 
+       const msgDiv = document.createElement('div');
+       const isCurrentUser = msg.emisor._id === app.user._id;
+       msgDiv.className = 'chat-message ' + (isCurrentUser ? 'sent' : 'received');
+       const processedContent = msg.contenido.replace(/\n/g, '<br>');
+       msgDiv.innerHTML = `
+         <div class="chat-message-bubble">
+           <span class="message-sender">${msg.emisor.nombre}</span>
+           <div class="message-content">${processedContent}</div>
+           <span class="message-timestamp">${new Date(msg.fechaEnvio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+         </div>`;
+       chatMessagesEl.appendChild(msgDiv);
+     },
+
+     async sendMessage() {
+       if(!chatMessageInputEl || !app.currentChatPartnerId || !app.user) return;
+       const content = chatMessageInputEl.value.trim();
+       if (!content) return;
+
+       try {
+         const newMessage = await utils.apiCall('/mensajes', {
+           method: 'POST',
+           body: JSON.stringify({
+             emisor: app.user._id,
+             receptor: app.currentChatPartnerId,
+             contenido: content
+           })
+         });
+         chatMessageInputEl.value = '';
+         const placeholder = chatMessagesEl.querySelector('p[style*="text-align:center"]');
+         if (placeholder) placeholder.remove();
+         
+         this.renderMessage(newMessage); 
+         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+         await this.loadConversations(); 
+       } catch (error) {
+         console.error('Error sending message:', error);
+         // utils.showMessage is likely called by apiCall already
+       }
+     },
+
+     startPollingMessages() {
+       this.stopPollingMessages(); 
+       if (app.currentChatPartnerId) {
+         app.chatPollInterval = setInterval(() => {
+            if (document.visibilityState === 'visible' && app.currentChatPartnerId && app.user) {
+                this.loadMessages(true);
+            }
+         }, 5000); 
+       }
+     },
+
+     stopPollingMessages() {
+       if (app.chatPollInterval) {
+         clearInterval(app.chatPollInterval);
+         app.chatPollInterval = null;
+       }
+     }
+   };
+
+   // Refined init() function for mensajes.html
+   async function init() {
+     homeBtnEl = document.getElementById('homeBtn');
+     profileBtnEl = document.getElementById('profileBtn');
+     logoutBtnEl = document.getElementById('logoutBtn');
+     logoutModal = document.getElementById('logoutModal');
+     confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+     cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+     updateIndicator = document.getElementById('updateIndicator');
+
+     listaConversacionesEl = document.getElementById('listaConversaciones');
+     chatPanelEl = document.getElementById('chatPanel');
+     chatUserNameEl = document.getElementById('chatUserName');
+     chatMessagesEl = document.getElementById('chatMessages');
+     chatMessageInputEl = document.getElementById('chatMessageInput');
+     sendChatMessageBtnEl = document.getElementById('sendChatMessageBtn');
+     chatPlaceholderEl = document.getElementById('chatPlaceholder');
+
+     if (!(await auth.checkSession())) return; 
+
+     if(homeBtnEl) homeBtnEl.onclick = () => window.location.href = 'home.html';
+     if(profileBtnEl && app.user) profileBtnEl.onclick = () => window.location.href = `perfil.html?id=${app.user._id}`;
+     else if(profileBtnEl) profileBtnEl.style.display = 'none'; 
+     
+     if(logoutBtnEl) logoutBtnEl.onclick = () => { if(logoutModal) logoutModal.style.display = 'block'; };
+     if(confirmLogoutBtn) confirmLogoutBtn.onclick = () => { auth.logout(); if(logoutModal) logoutModal.style.display = 'none'; };
+     if(cancelLogoutBtn) cancelLogoutBtn.onclick = () => { if(logoutModal) logoutModal.style.display = 'none'; };
+
+     if (sendChatMessageBtnEl) {
+       sendChatMessageBtnEl.onclick = () => chat.sendMessage();
+     }
+     if (chatMessageInputEl) {
+       chatMessageInputEl.addEventListener('keypress', (e) => {
+         if (e.key === 'Enter' && !e.shiftKey) {
+           e.preventDefault();
+           chat.sendMessage();
+         }
+       });
+     }
+
+     await chat.loadConversations();
+
+     const urlParams = new URLSearchParams(window.location.search);
+     const chatWithUserId = urlParams.get('chatWith');
+     const chatWithUserName = urlParams.get('chatWithNombre'); // Already URL decoded by get()
+     
+     if (chatWithUserId) {
+       // Use decodeURIComponent for chatWithUserName just in case it wasn't fully handled or contains special chars
+       const resolvedUserName = chatWithUserName ? decodeURIComponent(chatWithUserName) : 'Usuario'; 
+       await chat.openChat(chatWithUserId, resolvedUserName); 
+     } else {
+        if (!app.currentChatPartnerId && chatPlaceholderEl && chatPanelEl) {
+            chatPanelEl.style.display = 'block'; 
+            chatMessagesEl.innerHTML = ''; 
+            chatPlaceholderEl.style.display = 'block';
+            chatPlaceholderEl.innerHTML = 'Selecciona una conversación de la lista para empezar a chatear.'; // Use innerHTML for styled placeholders
+            const inputArea = document.querySelector('.chat-input-area');
+            if(inputArea) inputArea.style.display = 'none';
+        }
+     }
+     
+     // Initial state of chat input area based on whether a chat is open
+     const inputArea = document.querySelector('.chat-input-area');
+     if(inputArea){
+        inputArea.style.display = app.currentChatPartnerId ? 'flex' : 'none';
+     }
+
+
+     document.addEventListener('visibilitychange', () => {
+       if (document.hidden) {
+         chat.stopPollingMessages();
+       } else {
+         if(app.user) { // only if user is logged in
+            chat.loadConversations(); // Refresh conversations list
+            if (app.currentChatPartnerId) { 
+              chat.loadMessages(false); // Force refresh when tab becomes visible
+              chat.startPollingMessages();
+            }
+         }
+       }
+     });
+   }
+
+    window.onclick = function(event) {
+      if (event.target == logoutModal) {
+        logoutModal.style.display = "none";
+      }
+    }
+
+    init();
+  </script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script type="text/javascript" src="notifications.js"></script> <!-- Assuming notifications.js exists for showNotification -->
+</body>
+</html>

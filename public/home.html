@@ -96,7 +96,7 @@
     }
 
     /* Botones con efecto shimmer */
-    .logout-btn, .profile-btn {
+    .logout-btn, .profile-btn, .messages-btn { /* Added .messages-btn */
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
       color: #fff; 
       border: none; 
@@ -109,7 +109,7 @@
       overflow: hidden;
     }
 
-    .logout-btn::before, .profile-btn::before {
+    .logout-btn::before, .profile-btn::before, .messages-btn::before { /* Added .messages-btn */
       content: '';
       position: absolute;
       top: 0;
@@ -120,11 +120,11 @@
       transition: left 0.5s;
     }
 
-    .logout-btn:hover::before, .profile-btn:hover::before {
+    .logout-btn:hover::before, .profile-btn:hover::before, .messages-btn::hover::before { /* Added .messages-btn */
       left: 100%;
     }
 
-    .logout-btn:hover, .profile-btn:hover { 
+    .logout-btn:hover, .profile-btn:hover, .messages-btn:hover { /* Added .messages-btn */
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
     }
@@ -456,6 +456,134 @@
       background: linear-gradient(135deg, #3b82f6, #2563eb);
     }
 
+/* Styling for Conversation List items */
+#listaConversaciones li {
+  display: flex;
+  flex-direction: column; /* Allow text and last message to stack */
+  align-items: stretch; /* Stretch items to fill width */
+  /* Hover/active states are inherited from .user-list li */
+}
+
+/* Chat Panel Specifics */
+#chatUserName {
+  color: #a78bfa; /* Theme purple accent */
+  font-weight: 600;
+}
+
+/* Chat Messages Area */
+.chat-messages-area {
+  height: 300px; 
+  overflow-y: auto;
+  padding: 15px; /* Increased padding */
+  margin-bottom: 15px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25); /* Darker, more distinct background */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Softer border */
+}
+
+/* Individual Message Styling */
+.chat-message { /* Container for alignment */
+  margin-bottom: 12px; /* Increased spacing */
+  display: flex; /* Use flex for alignment */
+}
+
+.chat-message-bubble {
+  padding: 10px 15px;
+  border-radius: 18px; /* Uniform radius for now, specific below */
+  max-width: 78%; 
+  line-height: 1.45; 
+  word-wrap: break-word; /* Ensure long words break */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+  position: relative; 
+  font-size: 0.9rem;
+}
+
+.chat-message-bubble .message-sender {
+  font-size: 0.8rem; 
+  font-weight: 700; 
+  margin-bottom: 4px; 
+  display: block; 
+}
+
+.chat-message-bubble .message-content {
+  /* Newlines are handled by <br> tags inserted via JS */
+}
+
+.chat-message-bubble .message-timestamp {
+  font-size: 0.7rem;
+  color: #b0b0b0; /* Default timestamp color */
+  display: block;
+  margin-top: 5px; 
+  text-align: right; 
+}
+
+/* Sent Messages (Current User) */
+.chat-message.sent {
+  justify-content: flex-end; /* Align bubble to the right */
+}
+.chat-message.sent .chat-message-bubble {
+  background: linear-gradient(135deg, #5f79fa, #4c67f7); 
+  color: #ffffff;
+  border-radius: 18px 18px 6px 18px; /* Tail on bottom-left for sent */
+}
+.chat-message.sent .message-sender {
+  color: rgba(230, 230, 255, 0.9); 
+}
+.chat-message.sent .message-timestamp {
+  color: rgba(220, 220, 255, 0.8); 
+}
+
+/* Received Messages (Other User) */
+.chat-message.received {
+  justify-content: flex-start; /* Align bubble to the left */
+}
+.chat-message.received .chat-message-bubble {
+  background: rgba(55, 65, 81, 0.7); /* Darker gray, more opacity */
+  color: #e0e6ed;
+  border-radius: 18px 18px 18px 6px; /* Tail on bottom-right for received */
+}
+.chat-message.received .message-sender {
+  color: #ad94f7; 
+}
+/* Timestamp color for received messages uses default .message-timestamp */
+
+
+/* Chat Input Area */
+.chat-input-area {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end; 
+}
+
+#chatMessageInput {
+  flex-grow: 1;
+  min-height: 44px; 
+  resize: none; 
+  /* General input/textarea styles from the existing theme will apply */
+}
+
+#sendChatMessageBtn {
+  height: 44px; 
+  min-width: 90px; 
+  /* .btn styles from the existing theme will apply */
+}
+
+/* Placeholder styling for empty chat or conversations list */
+#chatMessages p[style*="text-align:center"],
+#listaConversaciones li[style*="text-align:center"] {
+  color: #888e9e !important; /* Ensure override if other styles apply */
+  font-style: italic !important;
+  padding: 25px !important; 
+  text-align: center !important; 
+  background: transparent !important; /* Ensure no other background interferes */
+  border: none !important; /* Ensure no borders interfere */
+}
+#listaConversaciones li[style*="text-align:center"]:hover {
+  background: transparent !important; /* No hover effect for placeholder */
+  transform: none !important;
+}
+
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .content { 
@@ -596,6 +724,7 @@
   <div class="header">
     <h2>Red Social</h2>
     <div class="header-actions">
+      <button id="messagesBtn" class="messages-btn">Mensajes</button>
       <button id="profileBtn" class="profile-btn">Mi Perfil</button>
       <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
     </div>
@@ -613,6 +742,7 @@
         <input type="text" id="searchUser" placeholder="Buscar por nombre" />
         <ul id="userResults" class="user-list"></ul>
       </div>
+      <!-- Chat Panels Removed -->
     </div>
 
     <div>
@@ -1165,7 +1295,7 @@
           const users = await utils.apiCall(`/usuarios/buscar?q=${encodeURIComponent(query)}`);
           users.forEach(user => {
             const li = document.createElement('li');
-            li.textContent = user.nombre;
+            li.textContent = user.nombre; // Corrected: Only show name and link to profile
             li.onclick = () => window.location.href = `perfil.html?id=${user._id}`;
             results.appendChild(li);
           });
@@ -1200,6 +1330,7 @@
       if (!(await auth.checkSession())) return;
 
       // Modal elements
+      let messagesBtnEl; // Declare messagesBtnEl
       const logoutModal = document.getElementById('logoutModal');
       const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
       const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
@@ -1241,18 +1372,31 @@
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           autoUpdate.stop();
+          // Removed chat polling calls
         } else {
-          autoUpdate.start();
-          posts.load(true);
+          autoUpdate.start(); 
+          if (app.user) { 
+            posts.load(true); 
+            // Removed chat polling calls
+          } else {
+            auth.checkSession(); 
+          }
         }
       });
+      
+      messagesBtnEl = document.getElementById('messagesBtn'); // Assign messagesBtnEl
+      if(messagesBtnEl) messagesBtnEl.onclick = () => window.location.href = 'mensajes.html';
+
 
       // Cargar datos iniciales
       await posts.load();
-      autoUpdate.start();
+      autoUpdate.start(); 
+      // Removed chat event listeners
     }
 
     // Iniciar aplicación
+    // Removed chat related const declarations
+    
     init();
 
     function showLogoutModal() {

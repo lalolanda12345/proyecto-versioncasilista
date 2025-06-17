@@ -23,6 +23,7 @@ app.use(express.static('public'));
 app.use('/usuarios', require('./routes/usuarios'));
 app.use('/publicaciones', require('./routes/publicaciones'));
 app.use('/comentarios', require('./routes/comentarios'));
+app.use('/mensajes', require('./routes/mensajes'));
 
 app.get('/', (req, res) => {
   res.send('🚀 API Red Social con Comentarios');
