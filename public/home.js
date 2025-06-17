@@ -10,12 +10,12 @@ async function verificarSesion() {
       document.getElementById('nombreUsuario').textContent = usuario.nombre;
       return true;
     } else {
-      alert('❌ Debes iniciar sesión primero');
+      showNotification('Debes iniciar sesión primero', 'error');
       window.location.href = 'index.html';
       return false;
     }
   } catch (error) {
-    alert('❌ Error de conexión');
+    showNotification('Error de conexión', 'error');
     window.location.href = 'index.html';
     return false;
   }
@@ -40,13 +40,13 @@ document.getElementById('cerrarSesion').addEventListener('click', async () => {
     });
 
     if (res.ok) {
-      alert('✅ Sesión cerrada');
+      showNotification('Sesión cerrada', 'success');
       window.location.href = 'index.html';
     } else {
-      alert('❌ Error al cerrar sesión');
+      showNotification('Error al cerrar sesión', 'error');
     }
   } catch (error) {
-    alert('❌ Error de conexión');
+    showNotification('Error de conexión', 'error');
   }
 });
 
@@ -68,12 +68,12 @@ document.getElementById('publicacionForm').addEventListener('submit', async (e) 
     if (res.ok) {
       document.getElementById('contenido').value = '';
       cargarPublicaciones();
-      alert('✅ Publicación creada exitosamente');
+      showNotification('Publicación creada exitosamente', 'success');
     } else {
-      alert('❌ Error al crear la publicación');
+      showNotification('Error al crear la publicación', 'error');
     }
   } catch (error) {
-    alert('❌ Error de conexión');
+    showNotification('Error de conexión', 'error');
   }
 });
 
@@ -124,10 +124,10 @@ async function darLike(publicacionId) {
     if (res.ok) {
       cargarPublicaciones(); // Recargar las publicaciones para mostrar el nuevo conteo
     } else {
-      alert('❌ Error al procesar like');
+      showNotification('Error al procesar like', 'error');
     }
   } catch (error) {
-    alert('❌ Error de conexión');
+    showNotification('Error de conexión', 'error');
   }
 }
 

@@ -408,6 +408,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
   <div class="header">
@@ -566,28 +567,28 @@
           const nuevaBiografia = biografiaTextarea.value.trim();
           endpoint = `/usuarios/${id}/biografia`;
           data = { biografia: nuevaBiografia };
-          successMsg = '✅ Biografía actualizada';
+          successMsg = 'Biografía actualizada';
         } else if (tipo === 'nombre') {
           const nuevoNombre = nombreInput.value.trim();
           if (nuevoNombre.length < 3) {
-            return mostrarMensaje('❌ El nombre debe tener al menos 3 caracteres', 'error');
+            showNotification('El nombre debe tener al menos 3 caracteres', 'error'); return;
           }
           endpoint = `/usuarios/${id}/nombre`;
           data = { nombre: nuevoNombre };
-          successMsg = '✅ Nombre actualizado';
+          successMsg = 'Nombre actualizado';
         } else if (tipo === 'contrasena') {
           const actual = contrasenaActual.value.trim();
           const nueva = contrasenaNueva.value.trim();
           const confirmar = contrasenaConfirmar.value.trim();
           
           if (!actual || !nueva || !confirmar) {
-            return mostrarMensaje('❌ Todos los campos son requeridos', 'error');
+            showNotification('Todos los campos son requeridos', 'error'); return;
           }
           if (nueva.length < 6) {
-            return mostrarMensaje('❌ La contraseña debe tener al menos 6 caracteres', 'error');
+            showNotification('La contraseña debe tener al menos 6 caracteres', 'error'); return;
           }
           if (nueva !== confirmar) {
-            return mostrarMensaje('❌ Las contraseñas no coinciden', 'error');
+            showNotification('Las contraseñas no coinciden', 'error'); return;
           }
           
           endpoint = `/usuarios/${id}/contrasena`;
@@ -616,43 +617,12 @@
         }
 
         cancelarEdicion(tipo);
-        mostrarMensaje(successMsg, 'exito');
+        showNotification(successMsg, 'success');
         
       } catch (error) {
-        mostrarMensaje('❌ ' + error.message, 'error');
+        showNotification(error.message, 'error');
       }
     }
-
-    function mostrarMensaje(texto, tipo) {
-      const mensaje = document.createElement('div');
-      mensaje.textContent = texto;
-      mensaje.style.cssText = `
-        position: fixed; top: 20px; right: 20px; padding: 15px 20px;
-        border-radius: 10px; color: white; font-weight: 600; z-index: 1000;
-        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
-        background: ${tipo === 'exito' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
-        animation: slideIn 0.3s ease-out;
-      `;
-      document.body.appendChild(mensaje);
-      setTimeout(() => {
-        mensaje.style.animation = 'slideOut 0.3s ease-in forwards';
-        setTimeout(() => mensaje.remove(), 300);
-      }, 3000);
-    }
-
-    // Estilos para animaciones
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
 
     async function cargarPerfil() {
       const params = new URLSearchParams(window.location.search);
@@ -699,7 +669,7 @@
           };
         }
       } catch (e) {
-        mostrarMensaje('❌ No se pudo cargar el perfil', 'error');
+        showNotification('No se pudo cargar el perfil', 'error');
         window.location.href = 'home.html';
       }
     }
@@ -709,5 +679,7 @@
       if (!esPerfilPropio) cargarPerfil();
     }, 3000);
   </script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script type="text/javascript" src="notifications.js"></script>
 </body>
 </html>

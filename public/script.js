@@ -15,10 +15,10 @@ if (registroForm) {
     const data = await res.json();
 
     if (res.ok) {
-      alert('✅ Usuario registrado: ' + data.nombre);
+      showNotification('Usuario registrado: ' + data.nombre, 'success');
       window.location.href = 'index.html';
     } else {
-      alert('❌ ' + data.mensaje);
+      showNotification(data.mensaje, 'error');
     }
   });
 }
@@ -54,11 +54,11 @@ if (loginForm) {
 
     const data = await res.json();
     if (res.ok) {
-      alert('✅ Sesión iniciada como: ' + data.nombre);
+      showNotification('Sesión iniciada como: ' + data.nombre, 'success');
       // Redirigir a la página de inicio
       window.location.href = 'home.html';
     } else {
-      alert('❌ ' + data.mensaje);
+      showNotification(data.mensaje, 'error');
     }
   });
 }
