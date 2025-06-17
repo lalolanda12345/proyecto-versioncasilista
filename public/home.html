@@ -594,8 +594,8 @@
       },
 
       showMessage(msg, type = 'info') {
-        const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-        alert(`${icons[type]} ${msg}`);
+        // The icons are not needed anymore as showNotification handles styling based on type
+        showNotification(msg, type);
       },
 
       async apiCall(url, options = {}) {
