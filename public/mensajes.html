@@ -62,7 +62,14 @@
     }
     @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .header h2 { position: relative; z-index: 1; font-weight: 700; font-size: 1.8rem; background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .header-actions { display: flex; gap: 12px; position: relative; z-index: 1; }
+    .header-actions {
+      display: flex;
+      /* flex-direction: row; */ /* Default, so can be omitted */
+      gap: 12px; /* Restore original/desired gap for horizontal layout */
+      position: relative;
+      z-index: 1;
+      /* align-items: flex-end; */ /* Removed */
+    }
     .logout-btn, .profile-btn, .home-btn, .messages-btn { /* Added .home-btn, .messages-btn */
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
       color: #fff; border: none; padding: 12px 20px; font-weight: 600; border-radius: 12px; cursor: pointer; 
@@ -92,7 +99,15 @@
     .user-list li:hover { background: rgba(99, 102, 241, 0.2); transform: translateX(8px); }
     
     /* Responsive Design */
-    @media (max-width: 768px) { .content { grid-template-columns: 1fr; } .header-actions { flex-direction: column; gap: 8px; } .header h2 { font-size: 1.5rem; } body { padding: 15px; } }
+    @media (max-width: 768px) { 
+      .content { grid-template-columns: 1fr; } 
+      .header-actions { 
+        flex-direction: column; 
+        gap: 8px; 
+      } 
+      .header h2 { font-size: 1.5rem; } 
+      body { padding: 15px; } 
+    }
     
     /* Styles for chat elements will be moved/added here later */
     /* Copied from previous step for chat elements, to be refined in styling step */
@@ -120,6 +135,109 @@
     .logout-modal-content .btn { margin: 5px; padding: 12px 25px; font-size: 14px; }
     #confirmLogoutBtn { background: linear-gradient(135deg, #ef4444, #dc2626); } #confirmLogoutBtn:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5); }
     #cancelLogoutBtn { background: linear-gradient(135deg, #60a5fa, #3b82f6); } #cancelLogoutBtn:hover { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+
+    /* Chat Bubble Styling */
+    .chat-messages-area {
+      /* display: flex; */ /* Existing style has overflow-y, flex might conflict if not careful. Keep existing for now, add gap */
+      /* flex-direction: column; */
+      gap: 10px; /* Space between messages - this is new and useful */
+    }
+
+    .chat-message {
+      display: flex;
+      max-width: 70%; /* Bubbles shouldn't be full width */
+      align-items: flex-end; /* Align timestamp and content nicely */
+      margin-bottom: 10px; /* Added to ensure gap is respected if flex gap isn't fully effective due to other styles */
+    }
+
+    .chat-message.sent {
+      align-self: flex-end; /* Sent messages to the right */
+      flex-direction: row-reverse; /* Makes bubble appear before timestamp for sent */
+      margin-left: auto; /* Ensure it aligns to the right */
+    }
+
+    .chat-message.received {
+      align-self: flex-start; /* Received messages to the left */
+      flex-direction: row;
+      margin-right: auto; /* Ensure it aligns to the left */
+    }
+
+    .chat-message-bubble {
+      padding: 10px 15px;
+      border-radius: 18px; /* Rounded corners for bubble */
+      position: relative; /* For potential future use with ::before/::after for tails */
+      word-wrap: break-word; /* Ensure long words don't break layout */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .chat-message.sent .chat-message-bubble {
+      background: linear-gradient(135deg, #007bff, #0056b3); /* Blue gradient for sent messages */
+      color: white;
+      border-top-right-radius: 5px; /* Different corner for tail effect */
+    }
+
+    .chat-message.received .chat-message-bubble {
+      background: linear-gradient(135deg, #6c757d, #495057); /* Grey gradient for received messages */
+      color: white;
+      border-top-left-radius: 5px; /* Different corner for tail effect */
+    }
+
+    .message-sender {
+      display: block;
+      font-size: 0.8em;
+      font-weight: bold;
+      margin-bottom: 5px;
+      /* color: rgba(255, 255, 255, 0.8); */ /* Color is white from bubble, this could make it less readable */
+    }
+    
+    .chat-message.sent .message-sender {
+      text-align: right; /* Align sender name to the right for sent messages */
+       /* display: none; */ /* Hiding sender name for current user's messages */
+    }
+    /* For received messages, sender name is already left-aligned by default block display */
+
+    .message-content {
+      font-size: 1em;
+      line-height: 1.4;
+    }
+
+    .message-timestamp {
+      font-size: 0.75em;
+      /* color: rgba(255, 255, 255, 0.6); */ /* Will inherit color from bubble, adjust if needed */
+      color: #e0e6ed; /* A slightly lighter color than bubble text for subtlety if bubble is dark */
+      opacity: 0.8;
+      margin-top: 5px;
+      display: block; /* Ensure it takes its own line or space */
+    }
+    
+    .chat-message.sent .message-timestamp {
+      text-align: right;
+      margin-left: 8px; /* Space between bubble and timestamp */
+      margin-right: 0;
+    }
+
+    .chat-message.received .message-timestamp {
+      text-align: left;
+      margin-right: 8px; /* Space between bubble and timestamp */
+      margin-left: 0;
+    }
+    
+    /* Ensure sender name is not shown for current user's messages for a cleaner look */
+    /* Decided to hide it for .sent messages as it's usually implied */
+    .chat-message.sent .message-sender {
+        display: none; 
+    }
+
+    /* Clearing any float issues if floats were used (not used here, but good practice) */
+    /* .chat-messages-area::after {
+      content: "";
+      clear: both;
+      display: table;
+    } */
+    /* The flex model used for .chat-message makes this unnecessary.
+       The existing .chat-messages-area is a block with overflow-y: auto, so children layout within it.
+       If .chat-message itself were floated, then this would be relevant for .chat-messages-area.
+    */
 
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">

@@ -90,9 +90,11 @@
 
     .header-actions {
       display: flex;
-      gap: 12px;
+      /* flex-direction: row; */ /* Default, so can be omitted */
+      gap: 12px; /* Restore original gap for horizontal layout */
       position: relative;
       z-index: 1;
+      /* align-items: flex-end; */ /* Removed */
     }
 
     /* Botones con efecto shimmer */
@@ -603,6 +605,7 @@
       .header-actions { 
         flex-direction: column; 
         gap: 8px; 
+        /* align-items: flex-start; */ /* Example if left alignment is desired */
       }
 
       .header h2 {
