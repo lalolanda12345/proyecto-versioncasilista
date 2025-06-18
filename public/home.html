@@ -57,7 +57,7 @@
       margin-bottom: 30px; 
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       position: relative;
-      overflow: hidden;
+      /* overflow: hidden; */
     }
 
     .header::before {
@@ -718,6 +718,111 @@
 #cancelLogoutBtn:hover {
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
+
+     /* Styling for the new trigger icon button */
+     .icon-btn {
+         padding: 8px 12px; /* Adjust padding for icon */
+         font-size: 1.2rem; /* Make bell icon larger */
+         /* margin-left: 10px; */ /* Removed to use existing gap in header-actions */
+     }
+
+     /* Ensure header can act as a positioning context (already has position:relative) */
+     /* .header {
+         position: relative; 
+     } */
+
+     /* Styling for the inbox panel */
+     .inbox-panel {
+         position: absolute;
+         top: calc(100% + 5px); /* Position below the header with a small gap */
+         right: 0;
+         width: 300px; /* Adjust as needed */
+         max-height: 400px; /* Limit height */
+         overflow-y: auto; /* Scroll for overflow */
+         background: rgba(30, 30, 50, 0.9); /* Darker, more opaque for readability */
+         backdrop-filter: blur(15px);
+         border: 1px solid rgba(255, 255, 255, 0.15);
+         border-radius: 8px;
+         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+         padding: 15px;
+    z-index: 9999; /* Updated value */
+         color: #e0e0e0;
+     }
+
+     .inbox-panel h4 {
+         margin-top: 0;
+         margin-bottom: 10px;
+         font-size: 1rem;
+         font-weight: 600;
+         color: #ffffff;
+         border-bottom: 1px solid rgba(255,255,255,0.1);
+         padding-bottom: 8px;
+     }
+
+     .inbox-panel .inbox-request-item {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         padding: 8px 0;
+         border-bottom: 1px solid rgba(255,255,255,0.08);
+         font-size: 0.9rem;
+     }
+
+     .inbox-panel .inbox-request-item:last-child {
+         border-bottom: none;
+     }
+
+     .inbox-panel .requester-name {
+         flex-grow: 1;
+     }
+
+     .inbox-panel .actions button {
+         padding: 5px 10px;
+         margin-left: 8px;
+         border: none;
+         border-radius: 4px;
+         cursor: pointer;
+         font-size: 0.8rem;
+         transition: background-color 0.2s;
+     }
+
+     .inbox-panel .btn-accept-inbox {
+         background-color: #28a745;
+         color: white;
+     }
+     .inbox-panel .btn-accept-inbox:hover {
+         background-color: #218838;
+     }
+
+     .inbox-panel .btn-decline-inbox {
+         background-color: #dc3545;
+         color: white;
+     }
+     .inbox-panel .btn-decline-inbox:hover {
+         background-color: #c82333;
+     }
+    
+     .inbox-panel .no-requests-message {
+         text-align: center;
+         padding: 10px;
+         color: #aaa;
+     }
+
+     .inbox-panel .view-all-link {
+         display: block;
+         text-align: center;
+         margin-top: 10px;
+         padding: 8px;
+         background: rgba(255,255,255,0.05);
+         color: #64b5f6;
+         border-radius: 4px;
+         text-decoration: none;
+         font-size: 0.85rem;
+         transition: background-color 0.2s;
+     }
+     .inbox-panel .view-all-link:hover {
+         background: rgba(255,255,255,0.1);
+     }
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -727,9 +832,17 @@
   <div class="header">
     <h2>Flick</h2>
     <div class="header-actions">
+      <button id="inboxTriggerBtn" class="logout-btn icon-btn" aria-label="Follow Requests" style="display: none;">🔔</button>
       <button id="messagesBtn" class="messages-btn">Mensajes</button>
       <button id="profileBtn" class="profile-btn">Mi Perfil</button>
       <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+    </div>
+    <div id="followRequestsInbox" class="inbox-panel" style="display: none;">
+        <h4>Solicitudes de Seguimiento</h4>
+        <div id="inboxRequestsList">
+            <p class="no-requests-message" style="display: none;">No tienes solicitudes pendientes.</p>
+        </div>
+        <a href="solicitudes.html" class="view-all-link">Ver todas</a>
     </div>
   </div>
 
@@ -1327,6 +1440,125 @@
       }
     };
 
+    // Inbox elements
+    let inboxTriggerBtnEl;
+    let followRequestsInboxEl;
+    let inboxRequestsListEl;
+    let noRequestsMessageEl; // Make sure this is declared if used by the functions
+
+    function toggleFollowRequestsInbox() {
+        console.log("home.html: toggleFollowRequestsInbox called. followRequestsInboxEl:", followRequestsInboxEl, "inboxRequestsListEl:", inboxRequestsListEl);
+        if (!followRequestsInboxEl) {
+            console.error("toggleFollowRequestsInbox: followRequestsInboxEl not found");
+            return;
+        }
+        if (!inboxRequestsListEl) { // Added check for inboxRequestsListEl
+            console.error("toggleFollowRequestsInbox: inboxRequestsListEl not found");
+            return;
+        }
+
+        const isVisible = followRequestsInboxEl.style.display === 'block';
+        followRequestsInboxEl.style.display = isVisible ? 'none' : 'block';
+
+        if (!isVisible) { // Only attempt to load if panel is being opened
+            const firstChild = inboxRequestsListEl.firstChild;
+            // Condition: Load if the list is completely empty (firstChild is null)
+            // OR if the list has exactly one child, that child is an element, and it's the no-requests-message.
+            if (!firstChild || (inboxRequestsListEl.children.length === 1 && firstChild.nodeType === 1 && firstChild.classList && firstChild.classList.contains('no-requests-message'))) {
+                cargarSolicitudesInbox();
+            }
+        }
+    }
+
+    async function cargarSolicitudesInbox() {
+        // Add this log at the beginning
+        console.log("home.html: cargarSolicitudesInbox called. inboxRequestsListEl:", inboxRequestsListEl, "noRequestsMessageEl:", noRequestsMessageEl);
+
+        if (!inboxRequestsListEl || !noRequestsMessageEl) {
+            console.error("home.html: cargarSolicitudesInbox: inboxRequestsListEl or noRequestsMessageEl not found");
+            return;
+        }
+       
+        while (inboxRequestsListEl.firstChild && !inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
+            inboxRequestsListEl.removeChild(inboxRequestsListEl.firstChild);
+        }
+        noRequestsMessageEl.style.display = 'none';
+
+        try {
+            const solicitudes = await utils.apiCall('/api/solicitudes-seguimiento/recibidas');
+            // Add this log after the API call
+            console.log("home.html: Solicitudes received in cargarSolicitudesInbox:", solicitudes);
+
+            if (solicitudes.length === 0) {
+                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
+                noRequestsMessageEl.style.display = 'block';
+                return;
+            }
+
+            solicitudes.forEach(solicitud => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inbox-request-item';
+                itemDiv.id = `inbox-solicitud-${solicitud._id}`;
+                const userInfo = document.createElement('span');
+                userInfo.className = 'requester-name';
+                userInfo.textContent = `${solicitud.solicitante?.nombre || 'Usuario Desconocido'} quiere seguirte.`;
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'actions';
+                const btnAceptar = document.createElement('button');
+                btnAceptar.className = 'btn-accept-inbox';
+                btnAceptar.textContent = 'Aceptar';
+                btnAceptar.onclick = () => manejarSolicitudInbox(solicitud._id, 'aceptar');
+                const btnRechazar = document.createElement('button');
+                btnRechazar.className = 'btn-decline-inbox';
+                btnRechazar.textContent = 'Rechazar';
+                btnRechazar.onclick = () => manejarSolicitudInbox(solicitud._id, 'rechazar');
+                actionsDiv.appendChild(btnAceptar);
+                actionsDiv.appendChild(btnRechazar);
+                itemDiv.appendChild(userInfo);
+                itemDiv.appendChild(actionsDiv);
+                inboxRequestsListEl.insertBefore(itemDiv, noRequestsMessageEl); 
+            });
+        } catch (error) {
+            console.error('Error cargando solicitudes en inbox (home.html):', error);
+            noRequestsMessageEl.textContent = 'Error al cargar solicitudes.';
+            noRequestsMessageEl.style.display = 'block';
+            if (typeof showNotification === 'function') {
+                showNotification(error.message || 'Error al cargar solicitudes de seguimiento.', 'error');
+            }
+        }
+    }
+
+    async function manejarSolicitudInbox(solicitudId, accion) {
+        try {
+            const resultado = await utils.apiCall(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, { // Use utils.apiCall
+                method: 'POST'
+                // No need for headers: {'Content-Type': 'application/json'} if utils.apiCall adds it by default
+            });
+            // No need to check res.ok here
+
+            if (typeof showNotification === 'function') { // Check if showNotification is available
+                showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
+            }
+            const itemToRemove = document.getElementById(`inbox-solicitud-${solicitudId}`);
+            if (itemToRemove) {
+                itemToRemove.remove();
+            }
+           
+            if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length <= 1 && inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
+                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
+                noRequestsMessageEl.style.display = 'block';
+            } else if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length === 0) {
+                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
+                noRequestsMessageEl.style.display = 'block';
+            }
+        } catch (error) {
+            console.error(`Error al ${accion} la solicitud desde inbox:`, error);
+            if (typeof showNotification === 'function') { // Check if showNotification is available
+                showNotification(error.message || `Error al procesar la solicitud.`, 'error');
+            }
+        }
+    }
+
     // Inicialización
     async function init() {
       // Verificar sesión
@@ -1395,6 +1627,22 @@
       await posts.load();
       autoUpdate.start(); 
       // Removed chat event listeners
+
+      // Initialize Inbox elements for home.html
+      inboxTriggerBtnEl = document.getElementById('inboxTriggerBtn');
+      followRequestsInboxEl = document.getElementById('followRequestsInbox');
+      console.log("home.html: init - followRequestsInboxEl:", followRequestsInboxEl);
+      inboxRequestsListEl = document.getElementById('inboxRequestsList');
+      console.log("home.html: init - inboxRequestsListEl:", inboxRequestsListEl);
+      if (followRequestsInboxEl) { // Ensure followRequestsInboxEl exists before querying
+        noRequestsMessageEl = followRequestsInboxEl.querySelector('.no-requests-message');
+        console.log("home.html: init - noRequestsMessageEl:", noRequestsMessageEl);
+      }
+
+      if (inboxTriggerBtnEl) {
+          inboxTriggerBtnEl.style.display = 'inline-flex'; // Show the button
+          inboxTriggerBtnEl.addEventListener('click', toggleFollowRequestsInbox);
+      }
     }
 
     // Iniciar aplicación

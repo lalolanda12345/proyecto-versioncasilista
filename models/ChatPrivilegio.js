@@ -23,16 +23,6 @@ const ChatPrivilegioSchema = new mongoose.Schema({
   fechaActualizacion: { 
     type: Date, 
     default: Date.now 
-  },
-  isArchived: { 
-    type: Boolean, 
-    default: false, 
-    index: true 
-  },
-  archivedBy: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Usuario', 
-    default: null 
   }
 });
 
