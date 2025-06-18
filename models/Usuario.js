@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const UsuarioSchema = new mongoose.Schema({
   nombre: { type: String, required: true, unique: true },
   contrasena: { type: String, required: true },
-  tipoCuenta: { type: String, enum: ['publica', 'privada'], default: 'privada' }, // New field
   fechaRegistro: { type: Date, default: Date.now },
   seguidores: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
   seguidos:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],

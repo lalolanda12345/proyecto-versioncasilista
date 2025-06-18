@@ -195,6 +195,95 @@
       transform: translateY(-1px);
     }
 
+    select#tipoCuentaSelect option {
+      background-color: #1a1a2e; /* Dark background from body gradient */
+      color: #FFFFFF;           /* White text */
+      /* Padding or other properties might not be consistently applied by browsers */
+    }
+
+    select#tipoCuentaSelect option:hover {
+        background-color: #3b82f6; /* Example primary blue, for hover, if supported */
+        color: #FFFFFF;
+    }
+
+/* Styles for the switch container (if needed beyond inline) */
+.switch-container {
+  /* display: flex; already inline */
+  /* align-items: center; already inline */
+  /* justify-content: space-between; already inline */
+  margin-bottom: 10px; /* Reduced from 15px on the select */
+}
+
+/* The switch - a label element */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;  /* Width of the switch track */
+  height: 34px; /* Height of the switch track */
+  flex-shrink: 0; /* Prevent shrinking if container is too small */
+}
+
+/* Hide default HTML checkbox */
+.switch input#tipoCuentaSwitch {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider (track and knob) */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255,255,255,0.1); /* Track color when off (Privada) - similar to form input borders */
+  border: 1px solid rgba(255,255,255,0.2);
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 16px; /* Rounded track */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; /* Height of the knob */
+  width: 26px;  /* Width of the knob */
+  left: 4px;    /* Position of the knob when off */
+  bottom: 3px;  /* Position of the knob when off (considering border) */
+  background-color: white; /* Knob color */
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 12px; /* Rounded knob */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+input#tipoCuentaSwitch:checked + .slider {
+  background-color: #3b82f6; /* Track color when on (Pública) - primary blue */
+  border-color: #60a5fa;
+}
+
+input#tipoCuentaSwitch:focus + .slider {
+  box-shadow: 0 0 1px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.2); /* Focus outline consistent with form-input */
+}
+
+input#tipoCuentaSwitch:checked + .slider:before {
+  -webkit-transform: translateX(26px); /* Move knob to the right when on */
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Adjustments for the descriptive paragraph below the switch */
+#accountPrivacySection > p { /* Targeting the <p> directly under accountPrivacySection */
+    font-size: 0.8em; 
+    color: rgba(255,255,255,0.7); 
+    text-align: center; 
+    /* margin-bottom is already inline, but can be centralized here if preferred */
+    /* margin-bottom: 15px; */ 
+    line-height: 1.4;
+}
+
     .form-textarea {
       resize: vertical;
       min-height: 100px;
@@ -490,6 +579,9 @@
     <div class="perfil-content">
       <div id="configuracionSection" style="display: none; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
         <div class="settings-columns-wrapper">
+            <div class="settings-column settings-column-left">
+                
+            </div>
             <div class="settings-column settings-column-right">
                 <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                     <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
@@ -536,6 +628,8 @@
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
     const btnConfiguracion = document.getElementById('btnConfiguracion');
     const configuracionSection = document.getElementById('configuracionSection');
+
+    // DOM Elements for Account Type
 
     // Event listeners
     biografiaTextarea.addEventListener('input', actualizarContador);
@@ -620,10 +714,12 @@
         if (biografiaDisplay.style.display === 'none' && !biografiaEdit.style.display === 'block') {
             biografiaDisplay.style.display = 'block'; // Restore biografia display
         }
-        // Removed accountPrivacySectionEl reference
+        if (accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
       } else { // If section is being shown
         showEditButtons();
-        // Removed accountPrivacySectionEl reference
+        if (esPerfilPropio && accountPrivacySectionEl) {
+          accountPrivacySectionEl.style.display = 'block';
+        }
       }
     }
 
@@ -753,7 +849,9 @@
           // Ensure edit buttons are hidden initially if config section is hidden
           showEditButtons(); 
           // Ensure privacy section is hidden initially if config section is hidden
-          // Removed accountPrivacySectionEl reference
+          if (configuracionSection && configuracionSection.style.display !== 'block') {
+          }
+
 
         } else { // Viewing another user's profile
           esPerfilPropio = false;
@@ -770,20 +868,50 @@
               if (yaSigue) {
                   btnSeguir.textContent = 'Dejar de seguir';
                   btnSeguir.classList.add('dejar');
+                  btnSeguir.onclick = async () => {
+                      const resUnfollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+                      if (resUnfollow.ok) cargarPerfil(); // Reload profile to update state
+                  };
               } else {
-                  btnSeguir.textContent = 'Seguir';
-                  btnSeguir.classList.remove('dejar');
-              }
-              
-              btnSeguir.onclick = async () => {
-                  const res = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-                  if (res.ok) {
-                      cargarPerfil(); // Reload profile to update state
-                  } else {
-                      const errorData = await res.json();
-                      showNotification(errorData.mensaje || 'Error al procesar la solicitud.', 'error');
+                  // Not yet following
+                  if (usuario.tipoCuenta === 'privada') {
+                      btnSeguir.textContent = 'Solicitar seguimiento';
+                      btnSeguir.classList.remove('dejar'); // Ensure it's not styled as 'dejar' initially
+                      btnSeguir.onclick = async () => {
+                          try {
+                              const resSolicitud = await fetch(`/api/solicitudes-seguimiento/${id}`, { 
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' }
+                              });
+                              const resultado = await resSolicitud.json();
+
+                              if (resSolicitud.ok) {
+                                  showNotification(resultado.mensaje || 'Solicitud enviada.', 'success');
+                                  btnSeguir.textContent = 'Solicitud enviada';
+                                  btnSeguir.disabled = true;
+                                  btnSeguir.classList.add('dejar'); // Use 'dejar' style for pending
+                              } else {
+                                  showNotification(resultado.mensaje || 'No se pudo enviar la solicitud.', 'error');
+                                  if (resultado.mensaje && resultado.mensaje.toLowerCase().includes('pendiente')) {
+                                       btnSeguir.textContent = 'Solicitud enviada';
+                                       btnSeguir.disabled = true;
+                                       btnSeguir.classList.add('dejar');
+                                  }
+                              }
+                          } catch (err) {
+                              console.error("Error sending follow request:", err);
+                              showNotification('Error al conectar con el servidor.', 'error');
+                          }
+                      };
+                  } else { // Public account or tipoCuenta not defined
+                      btnSeguir.textContent = 'Seguir';
+                      btnSeguir.classList.remove('dejar');
+                      btnSeguir.onclick = async () => {
+                          const resFollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+                          if (resFollow.ok) cargarPerfil(); // Reload profile to update state
+                      };
                   }
-              };
+              }
           }
         }
 

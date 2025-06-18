@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Solicitudes de Seguimiento</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: #e0e0e0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .solicitud-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .solicitud-item p {
+      margin: 0;
+      font-size: 1.1em;
+    }
+    .solicitud-item .actions button {
+      padding: 8px 15px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+    .btn-aceptar {
+      background-color: #28a745; /* Green */
+      color: white;
+    }
+    .btn-aceptar:hover {
+      background-color: #218838;
+    }
+    .btn-rechazar {
+      background-color: #dc3545; /* Red */
+      color: white;
+    }
+    .btn-rechazar:hover {
+      background-color: #c82333;
+    }
+    .no-solicitudes {
+      text-align: center;
+      color: #aaa;
+      font-size: 1.2em;
+      margin-top: 30px;
+    }
+    .nav-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        padding: 10px 15px;
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .nav-link:hover {
+        background: rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Solicitudes de Seguimiento Pendientes</h2>
+    <div id="lista-solicitudes">
+      <!-- Solicitudes will be loaded here by JavaScript -->
+    </div>
+    <a href="home.html" class="nav-link">Volver a Inicio</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script>
+    // Helper function for notifications (ensure notifications.js is loaded or define showNotification)
+    function showNotification(message, type = 'info') {
+        Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: "top", // `top` or `bottom`
+            position: "right", // `left`, `center` or `right`
+            backgroundColor: type === 'success' ? "linear-gradient(to right, #00b09b, #96c93d)" : "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+    }
+
+    async function cargarSolicitudes() {
+      const listaSolicitudesDiv = document.getElementById('lista-solicitudes');
+      listaSolicitudesDiv.innerHTML = ''; // Clear previous list
+
+      try {
+        const res = await fetch('/api/solicitudes-seguimiento/recibidas');
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.mensaje || 'Error al cargar solicitudes');
+        }
+        const solicitudes = await res.json();
+
+        if (solicitudes.length === 0) {
+          listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">No tienes solicitudes de seguimiento pendientes.</p>';
+          return;
+        }
+
+        solicitudes.forEach(solicitud => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'solicitud-item';
+          itemDiv.id = `solicitud-${solicitud._id}`;
+
+          const userInfo = document.createElement('p');
+          userInfo.textContent = `${solicitud.solicitante.nombre} quiere seguirte.`;
+          
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions';
+
+          const btnAceptar = document.createElement('button');
+          btnAceptar.className = 'btn-aceptar';
+          btnAceptar.textContent = 'Aceptar';
+          btnAceptar.onclick = () => manejarSolicitud(solicitud._id, 'aceptar');
+
+          const btnRechazar = document.createElement('button');
+          btnRechazar.className = 'btn-rechazar';
+          btnRechazar.textContent = 'Rechazar';
+          btnRechazar.onclick = () => manejarSolicitud(solicitud._id, 'rechazar');
+
+          actionsDiv.appendChild(btnAceptar);
+          actionsDiv.appendChild(btnRechazar);
+          itemDiv.appendChild(userInfo);
+          itemDiv.appendChild(actionsDiv);
+          listaSolicitudesDiv.appendChild(itemDiv);
+        });
+
+      } catch (error) {
+        console.error('Error cargando solicitudes:', error);
+        listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">Error al cargar solicitudes.</p>';
+        showNotification(error.message, 'error');
+      }
+    }
+
+    async function manejarSolicitud(solicitudId, accion) {
+      try {
+        const res = await fetch(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const resultado = await res.json();
+
+        if (res.ok) {
+          showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
+          // Remove the item from the list
+          const itemToRemove = document.getElementById(`solicitud-${solicitudId}`);
+          if (itemToRemove) {
+            itemToRemove.remove();
+          }
+          // Check if list is now empty
+          const listaSolicitudesDiv = document.getElementById('lista-solicitudes');
+          if (!listaSolicitudesDiv.hasChildNodes() || listaSolicitudesDiv.children.length === 0 || (listaSolicitudesDiv.children.length === 1 && listaSolicitudesDiv.firstChild.classList && listaSolicitudesDiv.firstChild.classList.contains('no-solicitudes'))) {
+             listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">No tienes solicitudes de seguimiento pendientes.</p>';
+          }
+
+        } else {
+          throw new Error(resultado.mensaje || `Error al ${accion} la solicitud.`);
+        }
+      } catch (error) {
+        console.error(`Error al ${accion} la solicitud:`, error);
+        showNotification(error.message, 'error');
+      }
+    }
+
+    // Verificar sesión antes de cargar
+    async function verificarSesionYcargar() {
+        try {
+            const res = await fetch('/usuarios/session');
+            if (!res.ok) {
+                // No hay sesión activa o error al verificar
+                window.location.href = 'index.html'; // Redirigir a login
+                return;
+            }
+            // Sesión activa, cargar solicitudes
+            cargarSolicitudes();
+        } catch (error) {
+            console.error("Error verificando sesión:", error);
+            window.location.href = 'index.html'; // Redirigir a login en caso de error de red etc.
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', verificarSesionYcargar);
+  </script>
+</body>
+</html>

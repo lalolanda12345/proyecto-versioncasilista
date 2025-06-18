@@ -49,7 +49,7 @@
       margin-bottom: 30px; 
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       position: relative;
-      /* overflow: hidden; */
+      overflow: hidden;
     }
     .header::before { /* Header animation */
       content: '';
@@ -239,104 +239,70 @@
        If .chat-message itself were floated, then this would be relevant for .chat-messages-area.
     */
 
-     /* Styling for the new trigger icon button */
-     .icon-btn {
-         padding: 8px 12px; /* Adjust padding for icon */
-         font-size: 1.2rem; /* Make bell icon larger */
-     }
+    /* Archive Button and Modal Styling */
+    .archive-chat-btn {
+      background: #dc3545; /* Red background */
+      color: white;
+      padding: 3px 8px; 
+      font-size: 0.7em; 
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .archive-chat-btn:hover {
+      background: #c82333; /* Darker red on hover */
+    }
 
-     /* Styling for the inbox panel */
-     .inbox-panel {
-         position: absolute;
-         top: calc(100% + 5px); /* Position below the header with a small gap */
-         right: 0;
-         width: 300px;
-         max-height: 400px;
-         overflow-y: auto;
-         background: rgba(30, 30, 50, 0.9);
-         backdrop-filter: blur(15px);
-         border: 1px solid rgba(255, 255, 255, 0.15);
-         border-radius: 8px;
-         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-         padding: 15px;
-    z-index: 9999; /* Updated value */
-         color: #e0e0e0;
-     }
+    #archiveChatModal { 
+      display: none; 
+      position: fixed; 
+      z-index: 1001; 
+      left: 0; 
+      top: 0; 
+      width: 100%; 
+      height: 100%; 
+      overflow: auto; 
+      background-color: rgba(0,0,0,0.6); 
+      backdrop-filter: blur(5px); 
+    }
+    .archive-modal-content { 
+      background: linear-gradient(135deg, #1a0a2e, #16213e); 
+      margin: 15% auto; 
+      padding: 30px; 
+      border: 1px solid rgba(255, 255, 255, 0.1); 
+      width: 80%; 
+      max-width: 500px; /* Slightly wider for the longer text */
+      text-align: center; 
+      border-radius: 20px; 
+      color: #e0e6ed; 
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); 
+      animation: fadeInModal 0.3s ease-out; /* Re-use existing animation */
+    }
+    .archive-modal-content p { 
+      font-size: 1.1em; /* Slightly smaller than logout for more text */
+      margin-bottom: 25px; 
+      line-height: 1.6; 
+    }
+    .archive-modal-content .btn { /* General button style within this modal */
+      margin: 5px; 
+      padding: 12px 25px; 
+      font-size: 14px; 
+    }
+    #confirmArchiveBtn { 
+      background: linear-gradient(135deg, #ef4444, #dc2626); /* Red for confirm */
+    } 
+    #confirmArchiveBtn:hover { 
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5); 
+    }
+    #cancelArchiveBtn { 
+      background: linear-gradient(135deg, #60a5fa, #3b82f6); /* Blue for cancel */
+    } 
+    #cancelArchiveBtn:hover { 
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); 
+    }
 
-     .inbox-panel h4 {
-         margin-top: 0;
-         margin-bottom: 10px;
-         font-size: 1rem;
-         font-weight: 600;
-         color: #ffffff;
-         border-bottom: 1px solid rgba(255,255,255,0.1);
-         padding-bottom: 8px;
-     }
-
-     .inbox-panel .inbox-request-item {
-         display: flex;
-         justify-content: space-between;
-         align-items: center;
-         padding: 8px 0;
-         border-bottom: 1px solid rgba(255,255,255,0.08);
-         font-size: 0.9rem;
-     }
-
-     .inbox-panel .inbox-request-item:last-child {
-         border-bottom: none;
-     }
-
-     .inbox-panel .requester-name {
-         flex-grow: 1;
-     }
-
-     .inbox-panel .actions button {
-         padding: 5px 10px;
-         margin-left: 8px;
-         border: none;
-         border-radius: 4px;
-         cursor: pointer;
-         font-size: 0.8rem;
-         transition: background-color 0.2s;
-     }
-
-     .inbox-panel .btn-accept-inbox {
-         background-color: #28a745;
-         color: white;
-     }
-     .inbox-panel .btn-accept-inbox:hover {
-         background-color: #218838;
-     }
-
-     .inbox-panel .btn-decline-inbox {
-         background-color: #dc3545;
-         color: white;
-     }
-     .inbox-panel .btn-decline-inbox:hover {
-         background-color: #c82333;
-     }
-    
-     .inbox-panel .no-requests-message {
-         text-align: center;
-         padding: 10px;
-         color: #aaa;
-     }
-
-     .inbox-panel .view-all-link {
-         display: block;
-         text-align: center;
-         margin-top: 10px;
-         padding: 8px;
-         background: rgba(255,255,255,0.05);
-         color: #64b5f6;
-         border-radius: 4px;
-         text-decoration: none;
-         font-size: 0.85rem;
-         transition: background-color 0.2s;
-     }
-     .inbox-panel .view-all-link:hover {
-         background: rgba(255,255,255,0.1);
-     }
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -346,17 +312,9 @@
   <div class="header">
     <h2>Mensajes</h2> <!-- Title changed to Mensajes -->
     <div class="header-actions">
-      <button id="inboxTriggerBtn" class="logout-btn icon-btn" aria-label="Follow Requests" style="display: none;">🔔</button>
       <button id="homeBtn" class="home-btn">Inicio</button> <!-- Home button -->
       <button id="profileBtn" class="profile-btn">Mi Perfil</button>
       <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
-    </div>
-    <div id="followRequestsInbox" class="inbox-panel" style="display: none;">
-        <h4>Solicitudes de Seguimiento</h4>
-        <div id="inboxRequestsList">
-            <p class="no-requests-message" style="display: none;">No tienes solicitudes pendientes.</p>
-        </div>
-        <a href="solicitudes.html" class="view-all-link">Ver todas</a>
     </div>
   </div>
 
@@ -402,6 +360,15 @@
     </div>
   </div>
 
+  <!-- Archive Chat Confirmation Modal -->
+  <div id="archiveChatModal">
+    <div class="archive-modal-content">
+      <p>Are you sure you want to archive this chat? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.</p>
+      <button id="confirmArchiveBtn" class="btn">Confirm Archive</button>
+      <button id="cancelArchiveBtn" class="btn">Cancel Archive</button>
+    </div>
+  </div>
+
   <script>
     // Global app state
     const app = {
@@ -409,12 +376,15 @@
       currentChatPartnerId: null,
       currentChatPartnerName: null,
       chatPollInterval: null,
+      archivingChatPartnerId: null, 
+      currentChatArchivalStatus: null, // Added for current chat's archival state
     };
 
     // DOM Elements 
     let listaConversacionesEl, chatPanelEl, chatUserNameEl, chatMessagesEl, chatMessageInputEl, sendChatMessageBtnEl, chatPlaceholderEl;
     let listaSolicitudesMensajesEl; // Added for message requests
     let homeBtnEl, profileBtnEl, logoutBtnEl, logoutModal, confirmLogoutBtn, cancelLogoutBtn, updateIndicator;
+    let archiveChatModal, confirmArchiveBtn, cancelArchiveBtn; // Added for chat archival
 
     // [FROM HOME.HTML] Full 'utils' object definition:
     const utils = {
@@ -625,20 +595,30 @@
          conversations.forEach(conv => {
            const li = document.createElement('li');
            li.style.cursor = 'pointer';
+           // Wrap user info and last message in a div to better control layout with the button
            li.innerHTML = `
              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div style="flex-grow: 1;">
-                  <strong style="color: #e0e6ed;">${conv.otroUsuario.nombre}</strong>
-                  <small style="display:block; color: #9ca3af; font-size:0.8em;">
-                    ${conv.esEmisor ? 'Tú: ' : ''}${conv.ultimoMensaje.substring(0, 25)}${conv.ultimoMensaje.length > 25 ? '...' : ''}
-                  </small>
+                <div style="flex-grow: 1; display: flex; align-items: center;">
+                    <div style="flex-grow: 1; cursor: pointer;" onclick="chat.openChat('${conv.otroUsuario._id}', '${conv.otroUsuario.nombre.replace(/'/g, "\\'")}')">
+                        <strong style="color: #e0e6ed;">${conv.otroUsuario.nombre}</strong>
+                        <small style="display:block; color: #9ca3af; font-size:0.8em;">
+                          ${conv.esEmisor ? 'Tú: ' : ''}${conv.ultimoMensaje.substring(0, 20)}${conv.ultimoMensaje.length > 20 ? '...' : ''}
+                        </small>
+                    </div>
+                    <button class="btn btn-sm archive-chat-btn" data-user-id="${conv.otroUsuario._id}" style="background: #dc3545; padding: 3px 8px; font-size: 0.7em; margin-left: 10px; flex-shrink: 0;">X</button>
                 </div>
-                <small style="color: #9ca3af; font-size:0.75em; flex-shrink: 0;">${new Date(conv.fechaEnvio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                <small style="color: #9ca3af; font-size:0.75em; flex-shrink: 0; margin-left: 5px;">${new Date(conv.fechaEnvio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
              </div>
            `;
-           li.dataset.userId = conv.otroUsuario._id;
+           // It's generally better to attach event listeners using JS rather than inline onclick for the main chat opening action as well.
+           // However, to minimize changes to existing structure, the div for opening chat now has an onclick.
+           // The archive button will have its listener attached separately in a later step.
+           li.dataset.userId = conv.otroUsuario._id; // Keep this if other parts of the code use it directly on the li
            li.dataset.userName = conv.otroUsuario.nombre;
-           li.onclick = () => this.openChat(conv.otroUsuario._id, conv.otroUsuario.nombre);
+           // The main click to open chat is now on the inner div.
+           // If you need the li itself to be clickable for other reasons, you might need to adjust.
+           // For now, removing the direct li.onclick to avoid conflict with button click if not handled carefully.
+           // li.onclick = () => this.openChat(conv.otroUsuario._id, conv.otroUsuario.nombre); 
            listaConversacionesEl.appendChild(li);
          });
        } catch (error) {
@@ -658,44 +638,99 @@
 
        if(chatUserNameEl) chatUserNameEl.textContent = userName;
        if(chatPanelEl) chatPanelEl.style.display = 'block';
+       
+       app.currentChatArchivalStatus = null; // Reset archival status for the new chat
+
+       // Enable inputs and clear previous status messages by default
+       if(chatMessageInputEl) chatMessageInputEl.disabled = false;
+       if(sendChatMessageBtnEl) sendChatMessageBtnEl.disabled = false;
        const inputArea = document.querySelector('.chat-input-area');
-       if(inputArea) inputArea.style.display = 'flex'; // Make sure input area is visible
+       if(inputArea) inputArea.style.display = 'flex'; 
 
-       if (chatPlaceholderEl) chatPlaceholderEl.style.display = 'none';
-       if(chatMessagesEl) chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">Cargando mensajes...</p>';
+       if(chatMessagesEl) { 
+           const existingStatusElements = chatMessagesEl.querySelectorAll('.chat-status-message, .archival-actions-bar');
+           existingStatusElements.forEach(el => el.remove());
+           const placeholder = chatMessagesEl.querySelector('p[style*="text-align:center"]');
+           if(placeholder) placeholder.remove(); // Clear "Cargando mensajes..." or "No hay mensajes..."
+           chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">Cargando mensajes...</p>'; // Set loading message
+       } else if (chatPlaceholderEl) { // Fallback if chatMessagesEl isn't ready (should be)
+           chatPlaceholderEl.style.display = 'none';
+       }
 
-       await this.loadMessages();
+
+       await this.loadMessages(); // This will now handle UI based on archival status
        this.startPollingMessages();
-       if(chatMessageInputEl) chatMessageInputEl.focus();
+       if(chatMessageInputEl && !chatMessageInputEl.disabled) chatMessageInputEl.focus(); // Focus only if not disabled
        history.pushState(null, '', `mensajes.html?chatWith=${userId}&chatWithNombre=${encodeURIComponent(userName)}`);
      },
 
      async loadMessages(isPolling = false) {
-       if (!app.currentChatPartnerId || !app.user || !chatMessagesEl) return;
-       try {
-         const messages = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
-         
-         const currentMessageElements = chatMessagesEl.querySelectorAll('div.chat-message');
-         const placeholderVisible = chatMessagesEl.querySelector('p[style*="text-align:center"]');
+        if (!app.currentChatPartnerId || !app.user || !chatMessagesEl) return;
 
-         if (!isPolling || messages.length !== currentMessageElements.length || placeholderVisible) {
-            chatMessagesEl.innerHTML = ''; 
-            if (messages.length === 0) {
-                chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">No hay mensajes. ¡Envía el primero!</p>';
-            } else {
-                messages.forEach(msg => this.renderMessage(msg));
+        let messages = [];
+        // Use locally optimistic archival status if available, especially for polling after self-archival
+        let archivalStatus = app.currentChatArchivalStatus || { isArchived: false, archivedByMe: false, archivedBy: null, chatPrivilegioEstado: 'none' };
+        
+        try {
+            // Avoid re-fetching full status if polling and already showing local archival status for initiator (self-archived)
+            // However, always fetch if not polling, or if chat isn't known to be archived by self (could be by other, or unarchived)
+            if (!isPolling || !app.currentChatArchivalStatus?.archivedByMe) {
+                const response = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
+                messages = response.messages || []; // Ensure messages is an array
+                archivalStatus = response.archivalStatus || archivalStatus; // Fallback to existing if not provided
+                app.currentChatArchivalStatus = archivalStatus; // Update global state
+            } else if (app.currentChatArchivalStatus?.archivedByMe && isPolling) {
+                // If polling and chat is known to be archived by THIS client, we still need fresh messages (e.g. if other user unarchived and sent a message)
+                // And we must get fresh archival status in case the other user unarchived it.
+                const response = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
+                messages = response.messages || [];
+                if (response.archivalStatus && !response.archivalStatus.isArchived) { // If backend says it's no longer archived
+                    app.currentChatArchivalStatus = response.archivalStatus;
+                    archivalStatus = response.archivalStatus;
+                } else {
+                    // If backend still says archived (or no status change), keep our local view (archivedByMe)
+                    archivalStatus = app.currentChatArchivalStatus; 
+                }
             }
-            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; 
-         }
-       } catch (error) {
-         console.error('Error loading messages:', error);
-         if (!isPolling && chatMessagesEl) {
-            chatMessagesEl.innerHTML = '<p style="text-align:center; color:red;">Error al cargar mensajes. Intenta de nuevo.</p>';
-         }
-       }
+
+            // --- Centralized UI Update Logic ---
+            chatMessagesEl.innerHTML = ''; // Clear previous messages and status elements
+
+            if (archivalStatus && archivalStatus.isArchived) {
+                if (messages && messages.length > 0) {
+                    messages.forEach(msg => this.renderMessage(msg));
+                }
+                if (archivalStatus.archivedByMe) {
+                    this.displayArchivedByMeMessage();
+                } else { // Archived by other user (or by system if archivedBy is null but isArchived is true)
+                    this.displayArchivedByOtherUserMessageAndActions();
+                }
+                if (chatMessageInputEl) chatMessageInputEl.disabled = true;
+                if (sendChatMessageBtnEl) sendChatMessageBtnEl.disabled = true;
+            } else { // Not archived
+                if (messages && messages.length > 0) {
+                    messages.forEach(msg => this.renderMessage(msg));
+                } else {
+                    chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">No hay mensajes. ¡Envía el primero!</p>';
+                }
+                if (chatMessageInputEl) chatMessageInputEl.disabled = false;
+                if (sendChatMessageBtnEl) sendChatMessageBtnEl.disabled = false;
+                
+                // TODO: Further UI changes based on archivalStatus.chatPrivilegioEstado (e.g., 'pendiente', 'bloqueado')
+                // For example, if 'pendiente', might disable input and show "Waiting for user to accept request"
+            }
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            if (!isPolling && chatMessagesEl) { // Show error only on initial load or non-polling refresh
+                 // Clear previous content before showing error
+                chatMessagesEl.innerHTML = '<p style="text-align:center; color:red;">Error al cargar mensajes. Intenta de nuevo.</p>';
+            }
+        }
      },
 
-     renderMessage(msg) { 
+     renderMessage(msg) {
        const msgDiv = document.createElement('div');
        const isCurrentUser = msg.emisor._id === app.user._id;
        msgDiv.className = 'chat-message ' + (isCurrentUser ? 'sent' : 'received');
@@ -733,9 +768,8 @@
            
            this.renderMessage(response.data); // Render the message for the sender
            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; // Scroll to new message
-           // utils.showMessage('Mensaje enviado.', 'success'); // Optional: if feedback for direct send is desired
+           // utils.showMessage('Mensaje enviado.', 'success'); 
          } else if (response && response.type === 'solicitud') {
-           // Message request was created
            utils.showMessage('Solicitud de mensaje enviada.', 'info');
          } else if (response && response.type === 'solicitud_existente') {
             // Backend indicated a request already exists (based on our custom type in POST /mensajes)
@@ -782,124 +816,100 @@
          clearInterval(app.chatPollInterval);
          app.chatPollInterval = null;
        }
-     }
+     },
+
+     async archiveConversation(partnerUserId) {
+        if (!app.user || !partnerUserId) return;
+        try {
+          utils.showUpdateIndicator(); // Show activity
+          await utils.apiCall(`/mensajes/conversacion/${partnerUserId}/archive`, {
+            method: 'POST',
+          });
+          utils.showMessage('Chat archivado exitosamente.', 'success');
+      
+          if (app.currentChatPartnerId === partnerUserId) {
+            // Optimistically update local archival status
+            app.currentChatArchivalStatus = {
+                isArchived: true,
+                archivedByMe: true, // Current user initiated this
+                archivedBy: app.user._id, // Current user's ID
+                // Preserve existing privilegio state if known, else default or assume 'activo'
+                chatPrivilegioEstado: app.currentChatArchivalStatus ? app.currentChatArchivalStatus.chatPrivilegioEstado : 'activo' 
+            };
+            // The UI update will be handled by loadMessages
+          }
+      
+          await this.loadConversations(); // Refresh conversation list in the sidebar
+          if (app.currentChatPartnerId === partnerUserId) {
+            await this.loadMessages(false); // Force reload of current chat messages to apply archival UI
+          }
+      
+        } catch (error) {
+          console.error('Error archiving chat:', error);
+          // utils.apiCall should handle showing a generic error message.
+        }
+      },
+
+      displayArchivedByMeMessage() {
+        if (!chatMessagesEl) return;
+        const existingStatusMsg = chatMessagesEl.querySelector('.chat-status-message');
+        if (existingStatusMsg) existingStatusMsg.remove(); // Remove old one first
+
+        const archiveStatusMsg = document.createElement('p');
+        archiveStatusMsg.className = 'chat-status-message'; 
+        archiveStatusMsg.textContent = 'Has archivado esta conversación. El otro usuario ha sido notificado y no podrá responder hasta que se reactive el chat.';
+        archiveStatusMsg.style.textAlign = 'center';
+        archiveStatusMsg.style.fontStyle = 'italic';
+        archiveStatusMsg.style.color = '#9ca3af'; 
+        archiveStatusMsg.style.padding = '10px';
+        chatMessagesEl.appendChild(archiveStatusMsg);
+      },
+
+      displayArchivedByOtherUserMessageAndActions() {
+        if (!chatMessagesEl) return;
+        const existingBar = chatMessagesEl.querySelector('.archival-actions-bar');
+        if (existingBar) existingBar.remove(); // Remove old one first
+
+        const partnerName = app.currentChatPartnerName || 'El otro usuario';
+        const bar = document.createElement('div');
+        bar.className = 'archival-actions-bar';
+        bar.style.textAlign = 'center';
+        bar.style.padding = '10px';
+        bar.style.borderTop = '1px solid rgba(255,255,255,0.1)';
+        bar.style.marginTop = '10px';
+
+        bar.innerHTML = `
+          <p style="color:#9ca3af; font-style:italic; margin-bottom:10px;">${partnerName} ha archivado esta conversación.</p>
+          <button id="acknowledgeArchiveBtn" class="btn btn-sm" style="margin-right: 5px; background: linear-gradient(135deg, #6c757d, #5a6268);">Quitar de mi lista</button>
+          <button id="requestReopenBtn" class="btn btn-sm" style="background: linear-gradient(135deg, #17a2b8, #138496);">Solicitar Reactivar Chat</button>
+        `;
+        chatMessagesEl.appendChild(bar);
+
+        // Attach event listeners
+        const ackBtn = bar.querySelector('#acknowledgeArchiveBtn');
+        if(ackBtn) ackBtn.onclick = () => this.acknowledgeArchive();
+        
+        const reopenBtn = bar.querySelector('#requestReopenBtn');
+        if(reopenBtn) reopenBtn.onclick = () => this.requestReopenChat();
+      },
+
+      async acknowledgeArchive() {
+        // This would typically involve removing the conversation from the user's list or marking it as "seen-archived"
+        utils.showMessage('Funcionalidad "Quitar de mi lista" pendiente de implementación.', 'info');
+        // Potentially:
+        // Call an API to mark this as acknowledged for the current user
+        // Then, app.currentChatArchivalStatus.acknowledgedByMe = true; (or similar)
+        // Then, chat.loadConversations(); and maybe hide the chat panel if no other chat is selected.
+      },
+
+      async requestReopenChat() {
+        // This would involve sending a new message or a special request to the other user
+        utils.showMessage('Funcionalidad "Solicitar Reactivar Chat" pendiente de implementación.', 'info');
+        // Potentially:
+        // Call an API that sends a special "unarchive_request" message or changes ChatPrivilegio state
+        // Update UI to show "Request sent" or similar
+      }
    };
-
-    // Inbox elements (global scope for these functions)
-    let inboxTriggerBtnEl;
-    let followRequestsInboxEl;
-    let inboxRequestsListEl;
-    let noRequestsMessageEl;
-
-    function toggleFollowRequestsInbox() {
-        console.log("mensajes.html: toggleFollowRequestsInbox called. followRequestsInboxEl:", followRequestsInboxEl, "inboxRequestsListEl:", inboxRequestsListEl);
-        if (!followRequestsInboxEl) {
-            console.error("toggleFollowRequestsInbox: followRequestsInboxEl not found in mensajes.html");
-            return;
-        }
-        if (!inboxRequestsListEl) { // Added check for inboxRequestsListEl
-            console.error("toggleFollowRequestsInbox: inboxRequestsListEl not found in mensajes.html");
-            return;
-        }
-
-        const isVisible = followRequestsInboxEl.style.display === 'block';
-        followRequestsInboxEl.style.display = isVisible ? 'none' : 'block';
-
-        if (!isVisible) { // Only attempt to load if panel is being opened
-            const firstChild = inboxRequestsListEl.firstChild;
-            // Condition: Load if the list is completely empty (firstChild is null)
-            // OR if the list has exactly one child, that child is an element, and it's the no-requests-message.
-            if (!firstChild || (inboxRequestsListEl.children.length === 1 && firstChild.nodeType === 1 && firstChild.classList && firstChild.classList.contains('no-requests-message'))) {
-                cargarSolicitudesInbox();
-            }
-        }
-    }
-
-    async function cargarSolicitudesInbox() {
-        // Add this log at the beginning
-        console.log("mensajes.html: cargarSolicitudesInbox called. inboxRequestsListEl:", inboxRequestsListEl, "noRequestsMessageEl:", noRequestsMessageEl);
-
-        if (!inboxRequestsListEl || !noRequestsMessageEl) {
-            // Update console error message to specify mensajes.html
-            console.error("mensajes.html: cargarSolicitudesInbox: inboxRequestsListEl or noRequestsMessageEl not found");
-            return;
-        }
-       
-        while (inboxRequestsListEl.firstChild && !inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
-            inboxRequestsListEl.removeChild(inboxRequestsListEl.firstChild);
-        }
-        noRequestsMessageEl.style.display = 'none';
-
-        try {
-            const solicitudes = await utils.apiCall('/api/solicitudes-seguimiento/recibidas');
-            // Add this log after the API call, specifying mensajes.html
-            console.log("mensajes.html: Solicitudes received in cargarSolicitudesInbox:", solicitudes);
-
-            if (solicitudes.length === 0) {
-                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
-                noRequestsMessageEl.style.display = 'block';
-                return;
-            }
-
-            solicitudes.forEach(solicitud => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'inbox-request-item';
-                itemDiv.id = `inbox-solicitud-${solicitud._id}`;
-                const userInfo = document.createElement('span');
-                userInfo.className = 'requester-name';
-                userInfo.textContent = `${solicitud.solicitante?.nombre || 'Usuario Desconocido'} quiere seguirte.`;
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'actions';
-                const btnAceptar = document.createElement('button');
-                btnAceptar.className = 'btn-accept-inbox';
-                btnAceptar.textContent = 'Aceptar';
-                btnAceptar.onclick = () => manejarSolicitudInbox(solicitud._id, 'aceptar');
-                const btnRechazar = document.createElement('button');
-                btnRechazar.className = 'btn-decline-inbox';
-                btnRechazar.textContent = 'Rechazar';
-                btnRechazar.onclick = () => manejarSolicitudInbox(solicitud._id, 'rechazar');
-                actionsDiv.appendChild(btnAceptar);
-                actionsDiv.appendChild(btnRechazar);
-                itemDiv.appendChild(userInfo);
-                itemDiv.appendChild(actionsDiv);
-                inboxRequestsListEl.insertBefore(itemDiv, noRequestsMessageEl); 
-            });
-        } catch (error) {
-            // Update console error message to specify mensajes.html
-            console.error('Error cargando solicitudes en inbox (mensajes.html):', error);
-            noRequestsMessageEl.textContent = 'Error al cargar solicitudes.';
-            noRequestsMessageEl.style.display = 'block';
-            if (typeof showNotification === 'function') {
-                showNotification(error.message || 'Error al cargar solicitudes de seguimiento.', 'error');
-            }
-        }
-    }
-
-    async function manejarSolicitudInbox(solicitudId, accion) {
-        try {
-            const resultado = await utils.apiCall(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, {
-                method: 'POST'
-            });
-            if (typeof showNotification === 'function') {
-                showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
-            }
-            const itemToRemove = document.getElementById(`inbox-solicitud-${solicitudId}`);
-            if (itemToRemove) itemToRemove.remove();
-           
-            if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length <= 1 && inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
-                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
-                noRequestsMessageEl.style.display = 'block';
-            } else if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length === 0){
-                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
-                noRequestsMessageEl.style.display = 'block';
-            }
-        } catch (error) {
-            console.error(`Error al ${accion} la solicitud desde inbox (mensajes.html):`, error);
-            if (typeof showNotification === 'function') {
-                showNotification(error.message || `Error al procesar la solicitud.`, 'error');
-            }
-        }
-    }
 
    // Refined init() function for mensajes.html
    async function init() {
@@ -911,6 +921,11 @@
      cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
      updateIndicator = document.getElementById('updateIndicator');
 
+     // Archive modal elements
+     archiveChatModal = document.getElementById('archiveChatModal');
+     confirmArchiveBtn = document.getElementById('confirmArchiveBtn');
+     cancelArchiveBtn = document.getElementById('cancelArchiveBtn');
+
      listaConversacionesEl = document.getElementById('listaConversaciones');
      chatPanelEl = document.getElementById('chatPanel');
      chatUserNameEl = document.getElementById('chatUserName');
@@ -920,28 +935,7 @@
      chatPlaceholderEl = document.getElementById('chatPlaceholder');
      listaSolicitudesMensajesEl = document.getElementById('listaSolicitudesMensajes'); // Initialize new element
 
-     // Initialize Inbox elements for mensajes.html
-     inboxTriggerBtnEl = document.getElementById('inboxTriggerBtn');
-     followRequestsInboxEl = document.getElementById('followRequestsInbox');
-     console.log("mensajes.html: init - followRequestsInboxEl:", followRequestsInboxEl);
-     inboxRequestsListEl = document.getElementById('inboxRequestsList'); // This is the div inside the panel
-     console.log("mensajes.html: init - inboxRequestsListEl:", inboxRequestsListEl);
-     
-     if (followRequestsInboxEl) {
-       noRequestsMessageEl = followRequestsInboxEl.querySelector('.no-requests-message'); // Get the p tag
-       console.log("mensajes.html: init - noRequestsMessageEl:", noRequestsMessageEl);
-     } else {
-       console.error("followRequestsInboxEl not found in mensajes.html");
-     }
-
      if (!(await auth.checkSession())) return; 
-
-     if (inboxTriggerBtnEl) {
-         inboxTriggerBtnEl.style.display = 'inline-flex'; // Show the button if user is logged in
-         inboxTriggerBtnEl.addEventListener('click', toggleFollowRequestsInbox);
-     } else {
-         console.error("inboxTriggerBtnEl not found in mensajes.html");
-     }
      
      await cargarSolicitudesMensajes(); // Load message requests
 
@@ -952,6 +946,53 @@
      if(logoutBtnEl) logoutBtnEl.onclick = () => { if(logoutModal) logoutModal.style.display = 'block'; };
      if(confirmLogoutBtn) confirmLogoutBtn.onclick = () => { auth.logout(); if(logoutModal) logoutModal.style.display = 'none'; };
      if(cancelLogoutBtn) cancelLogoutBtn.onclick = () => { if(logoutModal) logoutModal.style.display = 'none'; };
+
+     // Event listener for dynamically added archive buttons
+     if (listaConversacionesEl) {
+        listaConversacionesEl.addEventListener('click', function(event) {
+            const archiveButton = event.target.closest('.archive-chat-btn');
+            if (archiveButton) {
+                event.stopPropagation(); // Prevent chat from opening due to parent div's onclick
+                const partnerId = archiveButton.dataset.userId;
+                app.archivingChatPartnerId = partnerId;
+                
+                // Optional: Customize modal message with partnerName
+                // const listItem = archiveButton.closest('li');
+                // const partnerName = listItem ? listItem.dataset.userName : 'this user'; 
+                // const modalTextElement = archiveChatModal.querySelector('p');
+                // if (modalTextElement && partnerName) {
+                //    modalTextElement.textContent = `Are you sure you want to archive this chat with ${partnerName}? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.`;
+                // } else if (modalTextElement) {
+                //    modalTextElement.textContent = `Are you sure you want to archive this chat? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.`; // Default
+                // }
+
+                if (archiveChatModal) {
+                    archiveChatModal.style.display = 'block';
+                }
+            }
+            // Note: Opening chat is handled by onclick attribute on the div inside li,
+            // so no explicit 'else' block is needed here for that specific action.
+        });
+     }
+
+     // Event listener for "Confirm Archive" button
+     if (confirmArchiveBtn) {
+        confirmArchiveBtn.onclick = function() {
+            if (app.archivingChatPartnerId) {
+                chat.archiveConversation(app.archivingChatPartnerId); // Call the actual archive function
+            }
+            if (archiveChatModal) archiveChatModal.style.display = 'none';
+            app.archivingChatPartnerId = null; // Reset after action
+        };
+     }
+
+     // Event listener for "Cancel Archive" button
+     if (cancelArchiveBtn) {
+        cancelArchiveBtn.onclick = function() {
+            if (archiveChatModal) archiveChatModal.style.display = 'none';
+            app.archivingChatPartnerId = null;
+        };
+     }
 
      if (sendChatMessageBtnEl) {
        sendChatMessageBtnEl.onclick = () => chat.sendMessage();
@@ -1011,6 +1052,10 @@
     window.onclick = function(event) {
       if (event.target == logoutModal) {
         logoutModal.style.display = "none";
+      }
+      if (event.target == archiveChatModal) { // Added for archive modal
+        archiveChatModal.style.display = "none";
+        app.archivingChatPartnerId = null; // Reset when closing via outside click
       }
     }
 
