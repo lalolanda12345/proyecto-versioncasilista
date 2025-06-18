@@ -580,23 +580,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
       <div id="configuracionSection" style="display: none; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
         <div class="settings-columns-wrapper">
             <div class="settings-column settings-column-left">
-                <div class="profile-setting" id="accountPrivacySection" style="margin-top: 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: none;">
-                    <h4 style="font-weight: 600; font-size: 18px; color: #FFFFFF; margin-bottom: 15px;">Configuración de Privacidad de la Cuenta</h4>
-                    
-                    <div class="switch-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 15px;">
-                      <span style="color: rgba(255,255,255,0.9);">Cuenta Privada</span>
-                      <label class="switch" style="margin-left: 10px;">
-                        <input type="checkbox" id="tipoCuentaSwitch">
-                        <span class="slider round"></span>
-                      </label>
-                    </div>
-                    <p style="font-size: 0.8em; color: rgba(255,255,255,0.7); text-align: center; margin-bottom:15px;">
-                      Si es Pública, cualquiera puede enviarte mensajes. Si es Privada, se requieren solicitudes para nuevos chats.
-                    </p>
-        
-                    <button id="guardarTipoCuentaBtn" class="btn btn-primary" style="width:100%;">💾 Guardar Preferencia</button>
-                    <p id="tipoCuentaFeedback" style="font-size: 0.9em; margin-top: 10px; text-align:center;"></p>
-                  </div>
+                
             </div>
             <div class="settings-column settings-column-right">
                 <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
@@ -646,10 +630,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
     const configuracionSection = document.getElementById('configuracionSection');
 
     // DOM Elements for Account Type
-    let tipoCuentaSwitchEl; // Renamed from tipoCuentaSelectEl
-    let guardarTipoCuentaBtnEl;
-    let tipoCuentaFeedbackEl;
-    let accountPrivacySectionEl;
 
     // Event listeners
     biografiaTextarea.addEventListener('input', actualizarContador);
@@ -833,10 +813,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
       if (!id) return;
 
       // Initialize Account Type DOM elements here, as they are part of the profile card
-      accountPrivacySectionEl = document.getElementById('accountPrivacySection');
-      tipoCuentaSwitchEl = document.getElementById('tipoCuentaSwitch'); // Updated ID
-      guardarTipoCuentaBtnEl = document.getElementById('guardarTipoCuentaBtn');
-      tipoCuentaFeedbackEl = document.getElementById('tipoCuentaFeedback');
 
       try {
         const res = await fetch('/usuarios/' + id);
@@ -860,7 +836,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (!sesionRes.ok) { 
             console.error("No se pudo obtener la sesión del usuario.");
             // Potentially hide elements that depend on knowing the current user
-            if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
             return; 
         }
         usuarioActual = await sesionRes.json(); // This is the logged-in user
@@ -871,13 +846,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
           // Edit buttons are now inside configuracionSection, shown/hidden by toggleConfiguracion & showEditButtons
           
           // Setup account privacy settings. Visibility is handled by toggleConfiguracion
-          if(guardarTipoCuentaBtnEl) guardarTipoCuentaBtnEl.onclick = guardarTipoCuenta;
-          cargarPreferenciasUsuario(); 
           // Ensure edit buttons are hidden initially if config section is hidden
           showEditButtons(); 
           // Ensure privacy section is hidden initially if config section is hidden
-          if (configuracionSection && configuracionSection.style.display !== 'block' && accountPrivacySectionEl) {
-            accountPrivacySectionEl.style.display = 'none';
+          if (configuracionSection && configuracionSection.style.display !== 'block') {
           }
 
 
@@ -885,7 +857,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
           esPerfilPropio = false;
           if(btnConfiguracion) btnConfiguracion.style.display = 'none'; // Hide settings button
           if(configuracionSection) configuracionSection.style.display = 'none'; // Ensure settings section is hidden
-          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none'; // Ensure privacy settings are hidden
           
           const btnSeguir = document.getElementById('btnSeguir');
           if (btnSeguir) {
@@ -960,55 +931,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
         showNotification(e.message || 'No se pudo cargar el perfil', 'error');
         // Consider not redirecting immediately, maybe show error on page
         // window.location.href = 'home.html'; 
-      }
-    }
-
-    async function cargarPreferenciasUsuario() {
-      if (usuarioActual && tipoCuentaSwitchEl) { // Check if usuarioActual and the switch element exist
-        if (typeof usuarioActual.tipoCuenta !== 'undefined') {
-          tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'publica');
-        } else {
-          console.warn('Tipo de cuenta no encontrado en datos de sesión para cargar preferencia del switch.');
-          // Default to false (privada) if not defined, or handle as error
-          tipoCuentaSwitchEl.checked = false; 
-        }
-      } else if (tipoCuentaFeedbackEl) { // Only use feedbackEl if it exists
-        console.warn('Switch o datos de usuario no disponibles para cargar preferencias.');
-      }
-    }
-
-    async function guardarTipoCuenta() {
-      if (!tipoCuentaSwitchEl || !tipoCuentaFeedbackEl) return; // Ensure elements exist
-       
-      const nuevoTipoCuenta = tipoCuentaSwitchEl.checked ? 'publica' : 'privada'; // Determine from checkbox state
-       
-      tipoCuentaFeedbackEl.textContent = ''; 
-
-      try {
-        const response = await fetch('/usuarios/me/tipoCuenta', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tipoCuenta: nuevoTipoCuenta }) // Send string value
-        });
-         
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Error del servidor');
-        }
-         
-        tipoCuentaFeedbackEl.textContent = result.mensaje || 'Preferencia guardada.';
-        tipoCuentaFeedbackEl.style.color = 'green';
-        if(usuarioActual) usuarioActual.tipoCuenta = nuevoTipoCuenta; // Update local state
-
-      } catch (error) {
-        console.error('Error guardando tipo de cuenta:', error);
-        tipoCuentaFeedbackEl.textContent = error.message || 'Error al guardar la preferencia.';
-        tipoCuentaFeedbackEl.style.color = 'red';
-        // Revert checkbox state if possible
-        if (usuarioActual && typeof usuarioActual.tipoCuenta !== 'undefined') {
-           tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'publica');
-        }
       }
     }
 

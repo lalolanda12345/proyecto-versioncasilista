@@ -23,23 +23,9 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Emisor o receptor no encontrado.' });
     }
 
-    // NEW LOGIC: Check receptor's account type
-    if (receptorDoc.tipoCuenta === 'publica') {
-      // Recipient's account is public, send message directly
-      const nuevoMensaje = new Mensaje({
-        emisor: emisorId,
-        receptor: receptorId, // or receptorDoc._id
-        contenido
-      });
-      const mensajeGuardado = await nuevoMensaje.save();
-      await mensajeGuardado.populate('emisor', 'nombre');
-      await mensajeGuardado.populate('receptor', 'nombre');
-      return res.status(201).json({ type: 'mensaje', data: mensajeGuardado });
+    // Proceed with ChatPrivilegio and SolicitudMensaje logic for all users.
 
-    } else { // Recipient's account is 'privada'
-      // Proceed with existing ChatPrivilegio and SolicitudMensaje logic
-
-      // Check for an active ChatPrivilegio
+    // Check for an active ChatPrivilegio
     let privilegio = await ChatPrivilegio.findOne({
       $or: [
         { solicitante: emisorId, receptor: receptorId },
@@ -116,7 +102,6 @@ router.post('/', async (req, res) => {
       await solicitudGuardada.populate('receptor', 'nombre');
 
       return res.status(201).json({ type: 'solicitud', data: solicitudGuardada });
-      }
     }
   } catch (error) {
     // Check for unique index violation for ChatPrivilegio if it's not handled gracefully above
