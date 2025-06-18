@@ -195,95 +195,6 @@
       transform: translateY(-1px);
     }
 
-    select#tipoCuentaSelect option {
-      background-color: #1a1a2e; /* Dark background from body gradient */
-      color: #FFFFFF;           /* White text */
-      /* Padding or other properties might not be consistently applied by browsers */
-    }
-
-    select#tipoCuentaSelect option:hover {
-        background-color: #3b82f6; /* Example primary blue, for hover, if supported */
-        color: #FFFFFF;
-    }
-
-/* Styles for the switch container (if needed beyond inline) */
-.switch-container {
-  /* display: flex; already inline */
-  /* align-items: center; already inline */
-  /* justify-content: space-between; already inline */
-  margin-bottom: 10px; /* Reduced from 15px on the select */
-}
-
-/* The switch - a label element */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;  /* Width of the switch track */
-  height: 34px; /* Height of the switch track */
-  flex-shrink: 0; /* Prevent shrinking if container is too small */
-}
-
-/* Hide default HTML checkbox */
-.switch input#tipoCuentaSwitch {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* The slider (track and knob) */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255,255,255,0.1); /* Track color when off (Privada) - similar to form input borders */
-  border: 1px solid rgba(255,255,255,0.2);
-  -webkit-transition: .4s;
-  transition: .4s;
-  border-radius: 16px; /* Rounded track */
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px; /* Height of the knob */
-  width: 26px;  /* Width of the knob */
-  left: 4px;    /* Position of the knob when off */
-  bottom: 3px;  /* Position of the knob when off (considering border) */
-  background-color: white; /* Knob color */
-  -webkit-transition: .4s;
-  transition: .4s;
-  border-radius: 12px; /* Rounded knob */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-input#tipoCuentaSwitch:checked + .slider {
-  background-color: #3b82f6; /* Track color when on (Pública) - primary blue */
-  border-color: #60a5fa;
-}
-
-input#tipoCuentaSwitch:focus + .slider {
-  box-shadow: 0 0 1px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.2); /* Focus outline consistent with form-input */
-}
-
-input#tipoCuentaSwitch:checked + .slider:before {
-  -webkit-transform: translateX(26px); /* Move knob to the right when on */
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Adjustments for the descriptive paragraph below the switch */
-#accountPrivacySection > p { /* Targeting the <p> directly under accountPrivacySection */
-    font-size: 0.8em; 
-    color: rgba(255,255,255,0.7); 
-    text-align: center; 
-    /* margin-bottom is already inline, but can be centralized here if preferred */
-    /* margin-bottom: 15px; */ 
-    line-height: 1.4;
-}
-
     .form-textarea {
       resize: vertical;
       min-height: 100px;
@@ -527,127 +438,13 @@ input#tipoCuentaSwitch:checked + .slider:before {
             margin-bottom: 0px; /* Remove space below the privacy column when side by side */
         }
     }
-
-    /* Styling for the new trigger icon button */
-    .icon-btn {
-        padding: 8px 12px; /* Adjust padding for icon */
-        font-size: 1.2rem; /* Make bell icon larger */
-        margin-left: 10px; /* Space from title or previous element */
-    }
-
-    /* Ensure header can act as a positioning context */
-    .header {
-        position: relative; /* Needed for absolute positioning of the inbox panel */
-    }
-
-    /* Styling for the inbox panel */
-    .inbox-panel {
-        position: absolute;
-        top: calc(100% + 5px); /* Position below the header with a small gap */
-        right: 0;
-        width: 300px; /* Adjust as needed */
-        max-height: 400px; /* Limit height */
-        overflow-y: auto; /* Scroll for overflow */
-        background: rgba(30, 30, 50, 0.9); /* Darker, more opaque for readability */
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        padding: 15px;
-    z-index: 9999; /* Updated value */
-        color: #e0e0e0;
-    }
-
-    .inbox-panel h4 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #ffffff;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        padding-bottom: 8px;
-    }
-
-    .inbox-panel .inbox-request-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        font-size: 0.9rem;
-    }
-
-    .inbox-panel .inbox-request-item:last-child {
-        border-bottom: none;
-    }
-
-    .inbox-panel .requester-name {
-        flex-grow: 1;
-    }
-
-    .inbox-panel .actions button {
-        padding: 5px 10px;
-        margin-left: 8px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: background-color 0.2s;
-    }
-
-    .inbox-panel .btn-accept-inbox {
-        background-color: #28a745;
-        color: white;
-    }
-    .inbox-panel .btn-accept-inbox:hover {
-        background-color: #218838;
-    }
-
-    .inbox-panel .btn-decline-inbox {
-        background-color: #dc3545;
-        color: white;
-    }
-    .inbox-panel .btn-decline-inbox:hover {
-        background-color: #c82333;
-    }
-    
-    .inbox-panel .no-requests-message {
-        text-align: center;
-        padding: 10px;
-        color: #aaa;
-    }
-
-    .inbox-panel .view-all-link {
-        display: block;
-        text-align: center;
-        margin-top: 10px;
-        padding: 8px;
-        background: rgba(255,255,255,0.05);
-        color: #64b5f6;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.85rem;
-        transition: background-color 0.2s;
-    }
-    .inbox-panel .view-all-link:hover {
-        background: rgba(255,255,255,0.1);
-    }
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
   <div class="header">
     <h2>👤 Perfil de Usuario</h2>
-    <button id="inboxTriggerBtn" class="logout-btn icon-btn" aria-label="Follow Requests" style="display: none;">🔔</button>
     <a href="home.html"><button class="logout-btn">Volver</button></a>
-    <div id="followRequestsInbox" class="inbox-panel" style="display: none;">
-        <h4>Solicitudes de Seguimiento</h4>
-        <div id="inboxRequestsList">
-            <!-- Requests will be populated here -->
-            <p class="no-requests-message" style="display: none;">No tienes solicitudes pendientes.</p>
-        </div>
-        <a href="solicitudes.html" class="view-all-link">Ver todas</a>
-    </div>
   </div>
 
   <div class="perfil-card">
@@ -693,24 +490,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
     <div class="perfil-content">
       <div id="configuracionSection" style="display: none; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
         <div class="settings-columns-wrapper">
-            <div class="settings-column settings-column-left">
-                <div class="profile-setting" id="accountPrivacySection" style="margin-top: 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: none;">
-                    <h4 style="font-weight: 600; font-size: 18px; color: #FFFFFF; margin-bottom: 15px;">Configuración de Privacidad de la Cuenta</h4>
-                    
-                    <div class="switch-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 15px;">
-                      <span style="color: rgba(255,255,255,0.9);">Cuenta Privada</span>
-                      <label class="switch" style="margin-left: 10px;">
-                        <input type="checkbox" id="tipoCuentaSwitch">
-                        <span class="slider round"></span>
-                      </label>
-                    </div>
-                    <p style="font-size: 0.8em; color: rgba(255,255,255,0.7); text-align: center; margin-bottom:15px;">
-                      Si es Pública, cualquiera puede enviarte mensajes. Si es Privada, se requieren solicitudes para nuevos chats.
-                    </p>
-        
-                    <button id="guardarTipoCuentaBtn" class="btn btn-primary" style="width:100%;">💾 Guardar Preferencia</button>
-                  </div>
-            </div>
             <div class="settings-column settings-column-right">
                 <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                     <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
@@ -757,18 +536,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
     const btnConfiguracion = document.getElementById('btnConfiguracion');
     const configuracionSection = document.getElementById('configuracionSection');
-
-    // DOM Elements for Account Type
-    let tipoCuentaSwitchEl; // Renamed from tipoCuentaSelectEl
-    let guardarTipoCuentaBtnEl;
-    // let tipoCuentaFeedbackEl; // No longer used - this line was present in the file
-    let accountPrivacySectionEl;
-
-    // Inbox elements
-    let inboxTriggerBtnEl;
-    let followRequestsInboxEl;
-    let inboxRequestsListEl;
-    let noRequestsMessageEl;
 
     // Event listeners
     biografiaTextarea.addEventListener('input', actualizarContador);
@@ -853,12 +620,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (biografiaDisplay.style.display === 'none' && !biografiaEdit.style.display === 'block') {
             biografiaDisplay.style.display = 'block'; // Restore biografia display
         }
-        if (accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
+        // Removed accountPrivacySectionEl reference
       } else { // If section is being shown
         showEditButtons();
-        if (esPerfilPropio && accountPrivacySectionEl) {
-          accountPrivacySectionEl.style.display = 'block';
-        }
+        // Removed accountPrivacySectionEl reference
       }
     }
 
@@ -952,22 +717,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
       if (!id) return;
 
       // Initialize Account Type DOM elements here, as they are part of the profile card
-      accountPrivacySectionEl = document.getElementById('accountPrivacySection');
-      tipoCuentaSwitchEl = document.getElementById('tipoCuentaSwitch'); // Updated ID
-      guardarTipoCuentaBtnEl = document.getElementById('guardarTipoCuentaBtn');
-      // tipoCuentaFeedbackEl = document.getElementById('tipoCuentaFeedback'); // No longer used
-
-      // Initialize Inbox elements
-      inboxTriggerBtnEl = document.getElementById('inboxTriggerBtn');
-      followRequestsInboxEl = document.getElementById('followRequestsInbox');
-      inboxRequestsListEl = document.getElementById('inboxRequestsList');
-      if (followRequestsInboxEl) { // Ensure followRequestsInboxEl exists before querying
-        noRequestsMessageEl = followRequestsInboxEl.querySelector('.no-requests-message');
-      }
-
-      if (inboxTriggerBtnEl) {
-          inboxTriggerBtnEl.addEventListener('click', toggleFollowRequestsInbox);
-      }
 
       try {
         const res = await fetch('/usuarios/' + id);
@@ -991,7 +740,6 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (!sesionRes.ok) { 
             console.error("No se pudo obtener la sesión del usuario.");
             // Potentially hide elements that depend on knowing the current user
-            if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
             return; 
         }
         usuarioActual = await sesionRes.json(); // This is the logged-in user
@@ -999,30 +747,18 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (usuarioActual && usuarioActual._id === id) { // Check if logged-in user is viewing their own profile
           esPerfilPropio = true;
           if(btnConfiguracion) btnConfiguracion.style.display = 'inline-block'; // Show settings button
-          if (inboxTriggerBtnEl) {
-            inboxTriggerBtnEl.style.display = 'inline-flex'; 
-          }
           // Edit buttons are now inside configuracionSection, shown/hidden by toggleConfiguracion & showEditButtons
           
           // Setup account privacy settings. Visibility is handled by toggleConfiguracion
-          if(guardarTipoCuentaBtnEl) guardarTipoCuentaBtnEl.onclick = guardarTipoCuenta;
-          cargarPreferenciasUsuario(); 
           // Ensure edit buttons are hidden initially if config section is hidden
           showEditButtons(); 
           // Ensure privacy section is hidden initially if config section is hidden
-          if (configuracionSection && configuracionSection.style.display !== 'block' && accountPrivacySectionEl) {
-            accountPrivacySectionEl.style.display = 'none';
-          }
-
+          // Removed accountPrivacySectionEl reference
 
         } else { // Viewing another user's profile
           esPerfilPropio = false;
           if(btnConfiguracion) btnConfiguracion.style.display = 'none'; // Hide settings button
           if(configuracionSection) configuracionSection.style.display = 'none'; // Ensure settings section is hidden
-          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none'; // Ensure privacy settings are hidden
-          if (inboxTriggerBtnEl) {
-            inboxTriggerBtnEl.style.display = 'none';
-          }
           
           const btnSeguir = document.getElementById('btnSeguir');
           if (btnSeguir) {
@@ -1034,50 +770,20 @@ input#tipoCuentaSwitch:checked + .slider:before {
               if (yaSigue) {
                   btnSeguir.textContent = 'Dejar de seguir';
                   btnSeguir.classList.add('dejar');
-                  btnSeguir.onclick = async () => {
-                      const resUnfollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-                      if (resUnfollow.ok) cargarPerfil(); // Reload profile to update state
-                  };
               } else {
-                  // Not yet following
-                  if (usuario.tipoCuenta === 'privada') {
-                      btnSeguir.textContent = 'Solicitar seguimiento';
-                      btnSeguir.classList.remove('dejar'); // Ensure it's not styled as 'dejar' initially
-                      btnSeguir.onclick = async () => {
-                          try {
-                              const resSolicitud = await fetch(`/api/solicitudes-seguimiento/${id}`, { 
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' }
-                              });
-                              const resultado = await resSolicitud.json();
-
-                              if (resSolicitud.ok) {
-                                  showNotification(resultado.mensaje || 'Solicitud enviada.', 'success');
-                                  btnSeguir.textContent = 'Solicitud enviada';
-                                  btnSeguir.disabled = true;
-                                  btnSeguir.classList.add('dejar'); // Use 'dejar' style for pending
-                              } else {
-                                  showNotification(resultado.mensaje || 'No se pudo enviar la solicitud.', 'error');
-                                  if (resultado.mensaje && resultado.mensaje.toLowerCase().includes('pendiente')) {
-                                       btnSeguir.textContent = 'Solicitud enviada';
-                                       btnSeguir.disabled = true;
-                                       btnSeguir.classList.add('dejar');
-                                  }
-                              }
-                          } catch (err) {
-                              console.error("Error sending follow request:", err);
-                              showNotification('Error al conectar con el servidor.', 'error');
-                          }
-                      };
-                  } else { // Public account or tipoCuenta not defined
-                      btnSeguir.textContent = 'Seguir';
-                      btnSeguir.classList.remove('dejar');
-                      btnSeguir.onclick = async () => {
-                          const resFollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-                          if (resFollow.ok) cargarPerfil(); // Reload profile to update state
-                      };
-                  }
+                  btnSeguir.textContent = 'Seguir';
+                  btnSeguir.classList.remove('dejar');
               }
+              
+              btnSeguir.onclick = async () => {
+                  const res = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+                  if (res.ok) {
+                      cargarPerfil(); // Reload profile to update state
+                  } else {
+                      const errorData = await res.json();
+                      showNotification(errorData.mensaje || 'Error al procesar la solicitud.', 'error');
+                  }
+              };
           }
         }
 
@@ -1100,158 +806,12 @@ input#tipoCuentaSwitch:checked + .slider:before {
       }
     }
 
-    async function cargarPreferenciasUsuario() {
-      if (usuarioActual && tipoCuentaSwitchEl) { // Check if usuarioActual and the switch element exist
-        if (typeof usuarioActual.tipoCuenta !== 'undefined') {
-          tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'privada');
-        } else {
-          console.warn('Tipo de cuenta no encontrado en datos de sesión para cargar preferencia del switch.');
-          // Default to false (privada) if not defined, or handle as error
-          tipoCuentaSwitchEl.checked = false; 
-        }
-      } else { // Removed else if (tipoCuentaFeedbackEl) as it's no longer used.
-        console.warn('Switch o datos de usuario no disponibles para cargar preferencias.');
-      }
-    }
-
-    async function guardarTipoCuenta() {
-      if (!tipoCuentaSwitchEl) return; // Ensure elements exist
-       
-      const nuevoTipoCuenta = tipoCuentaSwitchEl.checked ? 'privada' : 'publica'; // Determine from checkbox state
-
-      try {
-        const response = await fetch('/usuarios/me/tipoCuenta', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tipoCuenta: nuevoTipoCuenta }) // Send string value
-        });
-         
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Error del servidor');
-        }
-         
-        showNotification('Guardado exitosamente', 'success');
-        if(usuarioActual) usuarioActual.tipoCuenta = nuevoTipoCuenta; // Update local state
-
-      } catch (error) {
-        console.error('Error guardando tipo de cuenta:', error);
-        showNotification(error.message || 'Error al guardar la preferencia.', 'error');
-        // Revert checkbox state if possible
-        if (usuarioActual && typeof usuarioActual.tipoCuenta !== 'undefined') {
-           tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'privada');
-        }
-      }
-    }
-
     cargarPerfil();
     // Removed setInterval for reloading other user's profile, as it can be disruptive.
     // A manual refresh or other UX would be better for that.
     // setInterval(() => {
     //  if (!esPerfilPropio) cargarPerfil();
     // }, 3000);
-
-    function toggleFollowRequestsInbox() {
-        if (!followRequestsInboxEl) return;
-        const isVisible = followRequestsInboxEl.style.display === 'block';
-        followRequestsInboxEl.style.display = isVisible ? 'none' : 'block';
-        if (!isVisible && inboxRequestsListEl && inboxRequestsListEl.children.length <= 1) { // Only fetch if opening and list is empty (or only has no-requests message)
-            cargarSolicitudesInbox();
-        }
-    }
-
-    async function cargarSolicitudesInbox() {
-        if (!inboxRequestsListEl || !noRequestsMessageEl) return;
-        
-        // Clear previous list but preserve the 'no requests' message element
-        while (inboxRequestsListEl.firstChild && !inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
-            inboxRequestsListEl.removeChild(inboxRequestsListEl.firstChild);
-        }
-        noRequestsMessageEl.style.display = 'none'; // Hide it initially
-
-        try {
-            const res = await fetch('/api/solicitudes-seguimiento/recibidas');
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.mensaje || 'Error al cargar solicitudes de seguimiento');
-            }
-            const solicitudes = await res.json();
-
-            if (solicitudes.length === 0) {
-                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.'; // Ensure default message
-                noRequestsMessageEl.style.display = 'block';
-                return;
-            }
-
-            solicitudes.forEach(solicitud => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'inbox-request-item';
-                itemDiv.id = `inbox-solicitud-${solicitud._id}`;
-
-                const userInfo = document.createElement('span');
-                userInfo.className = 'requester-name';
-                userInfo.textContent = `${solicitud.solicitante.nombre} quiere seguirte.`;
-                
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'actions';
-
-                const btnAceptar = document.createElement('button');
-                btnAceptar.className = 'btn-accept-inbox';
-                btnAceptar.textContent = 'Aceptar';
-                btnAceptar.onclick = () => manejarSolicitudInbox(solicitud._id, 'aceptar');
-
-                const btnRechazar = document.createElement('button');
-                btnRechazar.className = 'btn-decline-inbox';
-                btnRechazar.textContent = 'Rechazar';
-                btnRechazar.onclick = () => manejarSolicitudInbox(solicitud._id, 'rechazar');
-
-                actionsDiv.appendChild(btnAceptar);
-                actionsDiv.appendChild(btnRechazar);
-                itemDiv.appendChild(userInfo);
-                itemDiv.appendChild(actionsDiv);
-                // Prepend to show newest first, or append if order from API is already desired
-                inboxRequestsListEl.insertBefore(itemDiv, noRequestsMessageEl); 
-            });
-
-        } catch (error) {
-            console.error('Error cargando solicitudes en inbox:', error);
-            noRequestsMessageEl.textContent = 'Error al cargar solicitudes.';
-            noRequestsMessageEl.style.display = 'block';
-            showNotification(error.message, 'error');
-        }
-    }
-
-    async function manejarSolicitudInbox(solicitudId, accion) {
-        try {
-            const res = await fetch(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const resultado = await res.json();
-
-            if (res.ok) {
-                showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
-                const itemToRemove = document.getElementById(`inbox-solicitud-${solicitudId}`);
-                if (itemToRemove) {
-                    itemToRemove.remove();
-                }
-                // Check if list is now empty and show message if so
-                if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length === 1 && inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) { // Only no-requests message left
-                    noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.'; // Reset message
-                    noRequestsMessageEl.style.display = 'block';
-                } else if (inboxRequestsListEl && noRequestsMessageEl && inboxRequestsListEl.children.length === 0){ // Should not happen if noRequestsMessageEl is always there but good fallback
-                     noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
-                     noRequestsMessageEl.style.display = 'block';
-                }
-            } else {
-                throw new Error(resultado.mensaje || `Error al ${accion} la solicitud.`);
-            }
-        } catch (error) {
-            console.error(`Error al ${accion} la solicitud desde inbox:`, error);
-            showNotification(error.message, 'error');
-        }
-    }
   </script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script type="text/javascript" src="notifications.js"></script>
