@@ -255,8 +255,15 @@
   </div>
 
   <div class="content">
-    <!-- First column for conversations list -->
+    <!-- First column for requests and conversations list -->
     <div id="conversationsColumn">
+        <div class="panel" id="solicitudesPanel"> <!-- NEW PANEL -->
+            <h3>Solicitudes de Mensajes Pendientes</h3>
+            <ul id="listaSolicitudesMensajes" class="user-list">
+                <!-- Request items will be populated here by JS -->
+            </ul>
+        </div>
+
       <div class="panel" id="conversacionesPanel">
         <h3>Conversaciones</h3>
         <ul id="listaConversaciones" class="user-list">
@@ -300,6 +307,7 @@
 
     // DOM Elements 
     let listaConversacionesEl, chatPanelEl, chatUserNameEl, chatMessagesEl, chatMessageInputEl, sendChatMessageBtnEl, chatPlaceholderEl;
+    let listaSolicitudesMensajesEl; // Added for message requests
     let homeBtnEl, profileBtnEl, logoutBtnEl, logoutModal, confirmLogoutBtn, cancelLogoutBtn, updateIndicator;
 
     // [FROM HOME.HTML] Full 'utils' object definition:
@@ -402,6 +410,7 @@
 
        if(chatPanelEl) chatPanelEl.style.display = 'none';
        if(listaConversacionesEl) listaConversacionesEl.innerHTML = '';
+       if(listaSolicitudesMensajesEl) listaSolicitudesMensajesEl.innerHTML = ''; // Clear message requests
        if(chatMessagesEl) chatMessagesEl.innerHTML = '';
        if(chatUserNameEl) chatUserNameEl.textContent = 'Usuario';
        if(chatPlaceholderEl) chatPlaceholderEl.style.display = 'block';
@@ -411,6 +420,89 @@
        setTimeout(() => { window.location.href = 'index.html'; }, 500);
      }
    };
+
+   // Functions for Message Requests
+   async function cargarSolicitudesMensajes() {
+    if (!app.user || !listaSolicitudesMensajesEl) return;
+    try {
+      utils.showUpdateIndicator();
+      const solicitudes = await utils.apiCall('/solicitudesMensajes');
+      listaSolicitudesMensajesEl.innerHTML = '';
+      if (solicitudes.length === 0) {
+        listaSolicitudesMensajesEl.innerHTML = '<li style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 15px !important; background: transparent !important; border: none !important;">No tienes solicitudes pendientes.</li>';
+        return;
+      }
+      solicitudes.forEach(solicitud => {
+        const li = document.createElement('li');
+        li.style.padding = '10px'; // Adjust padding for buttons
+        li.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="flex-grow: 1;">
+              <strong style="color: #e0e6ed;">De: ${solicitud.emisor.nombre}</strong>
+              <small style="display:block; color: #9ca3af; font-size:0.9em; margin-top: 4px;">
+                "${solicitud.contenido.substring(0, 30)}${solicitud.contenido.length > 30 ? '...' : ''}"
+              </small>
+            </div>
+            <div style="flex-shrink: 0; display: flex; gap: 5px;">
+              <button class="btn btn-sm" onclick="aprobarSolicitud('${solicitud._id}')" style="background: linear-gradient(135deg, #28a745, #218838); padding: 5px 10px; font-size: 0.8em;">Aprobar</button>
+              <button class="btn btn-sm" onclick="rechazarSolicitud('${solicitud._id}')" style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 5px 10px; font-size: 0.8em;">Rechazar</button>
+            </div>
+          </div>
+        `;
+        listaSolicitudesMensajesEl.appendChild(li);
+      });
+    } catch (error) {
+      console.error('Error loading message requests:', error);
+      if(listaSolicitudesMensajesEl) listaSolicitudesMensajesEl.innerHTML = '<li style="text-align:center; color:red;">Error al cargar solicitudes.</li>';
+    }
+   }
+
+   async function aprobarSolicitud(solicitudId) {
+    if (!app.user) return;
+    try {
+      utils.showUpdateIndicator();
+      const resultado = await utils.apiCall(`/solicitudesMensajes/${solicitudId}/aprobar`, { method: 'PUT' });
+      utils.showMessage(resultado.mensaje || 'Solicitud aprobada.', 'success');
+      await cargarSolicitudesMensajes(); // Refresh requests list
+      await chat.loadConversations();   // Refresh conversations list
+      // Optionally, open chat with the user
+      if (resultado.mensajeCreado && resultado.mensajeCreado.emisor) { // emisor of message is original sender of request
+         // The message is created from the perspective of the original sender.
+         // So, if current user (receptor of request) approves it, the 'other user' in chat is `mensajeCreado.emisor`
+         chat.openChat(resultado.mensajeCreado.emisor._id, resultado.mensajeCreado.emisor.nombre);
+      } else if (resultado.solicitud && resultado.solicitud.emisor){ // Fallback if mensajeCreado is not fully populated as expected
+         const solicitudOriginal = await utils.apiCall(`/solicitudesMensajes`); // Fetch again to get populated emisor if needed
+         const solicitudAprobada = solicitudOriginal.find(s => s._id === solicitudId); // This is not ideal, API should return populated data
+         if(solicitudAprobada && solicitudAprobada.emisor) { // Check if emisor exists on the approved request object
+            chat.openChat(solicitudAprobada.emisor._id, solicitudAprobada.emisor.nombre);
+         } else {
+            // Fallback: find the request in the list to get emisor info (less ideal)
+            const solicitudElement = Array.from(listaSolicitudesMensajesEl.children).find(li => li.innerHTML.includes(solicitudId));
+            if (solicitudElement) {
+                // This is tricky as name is in HTML. Better to rely on API response.
+                // For now, just log it. A better solution would be ensuring API returns necessary info.
+                console.log("Solicitud aprobada, pero no se pudo abrir el chat automáticamente por falta de datos del emisor.");
+            }
+         }
+      }
+    } catch (error) {
+      console.error('Error approving request:', error);
+      // utils.showMessage will be called by apiCall
+    }
+   }
+
+   async function rechazarSolicitud(solicitudId) {
+    if (!app.user) return;
+    try {
+      utils.showUpdateIndicator();
+      const resultado = await utils.apiCall(`/solicitudesMensajes/${solicitudId}/rechazar`, { method: 'PUT' });
+      utils.showMessage(resultado.mensaje || 'Solicitud rechazada.', 'success');
+      await cargarSolicitudesMensajes(); // Refresh requests list
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      // utils.showMessage will be called by apiCall
+    }
+   }
 
    // [FROM HOME.HTML, with minor adaptations if needed] Full 'chat' object:
    const chat = {
@@ -517,7 +609,7 @@
        if (!content) return;
 
        try {
-         const newMessage = await utils.apiCall('/mensajes', {
+         const response = await utils.apiCall('/mensajes', { // This call now returns {type, data} or error
            method: 'POST',
            body: JSON.stringify({
              emisor: app.user._id,
@@ -525,17 +617,46 @@
              contenido: content
            })
          });
-         chatMessageInputEl.value = '';
-         const placeholder = chatMessagesEl.querySelector('p[style*="text-align:center"]');
-         if (placeholder) placeholder.remove();
-         
-         this.renderMessage(newMessage); 
-         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 
-         await this.loadConversations(); 
+         chatMessageInputEl.value = ''; // Clear input field regardless of outcome type
+
+         if (response && response.type === 'mensaje') {
+           // Message sent directly because chat is active
+           const placeholder = chatMessagesEl.querySelector('p[style*="text-align:center"]');
+           if (placeholder) placeholder.remove();
+           
+           this.renderMessage(response.data); // Render the message for the sender
+           chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight; // Scroll to new message
+           // utils.showMessage('Mensaje enviado.', 'success'); // Optional: if feedback for direct send is desired
+         } else if (response && response.type === 'solicitud') {
+           // Message request was created
+           utils.showMessage('Solicitud de mensaje enviada.', 'info');
+         } else if (response && response.type === 'solicitud_existente') {
+            // Backend indicated a request already exists (based on our custom type in POST /mensajes)
+            utils.showMessage('Ya tienes una solicitud pendiente con este usuario.', 'warning');
+         } else {
+            // Fallback for unexpected response structure, though apiCall should throw for HTTP errors.
+            utils.showMessage('Respuesta inesperada del servidor.', 'error');
+         }
+         
+         // Refresh conversations list, might show updated last message or status
+         await this.loadConversations();
+
        } catch (error) {
-         console.error('Error sending message:', error);
-         // utils.showMessage is likely called by apiCall already
+         // apiCall already logs the error. utils.showMessage might be called by apiCall for generic errors.
+         // Specific error handling based on error.message or a status code from error object if needed.
+         // For example, if apiCall is modified to throw structured errors:
+         if (error.message && error.message.includes('409')) { // Assuming 409 is for conflict/pending request
+            utils.showMessage('Ya tienes una solicitud pendiente con este usuario.', 'warning');
+         } else if (error.message && error.message.includes('400') || error.message.includes('404')) {
+            // Handled by apiCall's default error message, or add specific ones.
+            // utils.showMessage('Error en los datos enviados.', 'error');
+         } else {
+            // General error message shown by apiCall or a fallback here
+            // utils.showMessage('Error al enviar mensaje/solicitud.', 'error');
+         }
+         // The console.error is good for debugging
+         console.error('Error en chat.sendMessage:', error);
        }
      },
 
@@ -575,8 +696,11 @@
      chatMessageInputEl = document.getElementById('chatMessageInput');
      sendChatMessageBtnEl = document.getElementById('sendChatMessageBtn');
      chatPlaceholderEl = document.getElementById('chatPlaceholder');
+     listaSolicitudesMensajesEl = document.getElementById('listaSolicitudesMensajes'); // Initialize new element
 
      if (!(await auth.checkSession())) return; 
+     
+     await cargarSolicitudesMensajes(); // Load message requests
 
      if(homeBtnEl) homeBtnEl.onclick = () => window.location.href = 'home.html';
      if(profileBtnEl && app.user) profileBtnEl.onclick = () => window.location.href = `perfil.html?id=${app.user._id}`;

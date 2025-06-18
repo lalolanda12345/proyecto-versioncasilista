@@ -48,6 +48,51 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Middleware to check if user is authenticated
+const isAuthenticated = (req, res, next) => {
+  if (req.session && req.session.usuario && req.session.usuario._id) {
+    return next();
+  }
+  res.status(401).json({ error: 'No autenticado. Inicia sesión para continuar.' });
+};
+
+// PUT /usuarios/me/tipoCuenta - Update account type for the logged-in user
+router.put('/me/tipoCuenta', isAuthenticated, async (req, res) => {
+  try {
+    const { tipoCuenta } = req.body;
+    const loggedInUserId = req.session.usuario._id;
+
+    // Validate input
+    if (!tipoCuenta || !['publica', 'privada'].includes(tipoCuenta)) {
+      return res.status(400).json({ error: 'Valor de tipoCuenta inválido. Debe ser "publica" o "privada".' });
+    }
+
+    const usuario = await Usuario.findById(loggedInUserId);
+
+    if (!usuario) {
+      // This should ideally not happen if isAuthenticated works correctly and user is in session
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    usuario.tipoCuenta = tipoCuenta;
+    await usuario.save();
+
+    // It's good practice to return the updated part of the user or a success message.
+    // Avoid returning the whole user object if it contains sensitive info not needed by this request.
+
+    // Update tipoCuenta in session as well
+    if (req.session.usuario) {
+        req.session.usuario.tipoCuenta = usuario.tipoCuenta;
+    }
+
+    res.json({ mensaje: 'Tipo de cuenta actualizado correctamente.', tipoCuenta: usuario.tipoCuenta });
+
+  } catch (error) {
+    console.error('Error al actualizar tipo de cuenta:', error);
+    res.status(500).json({ error: 'Error interno del servidor al actualizar el tipo de cuenta.' });
+  }
+});
+
 // Obtener todos los usuarios
 router.get('/', async (req, res) => {
   try {
@@ -78,12 +123,13 @@ router.post('/login', async (req, res) => {
       // Guardar la sesión del usuario
       req.session.usuario = {
         _id: usuario._id,
-        nombre: usuario.nombre
+        nombre: usuario.nombre,
+        tipoCuenta: usuario.tipoCuenta // Add tipoCuenta to session
       };
+      // Send back the same object that's stored in the session
       res.json({ 
         mensaje: 'Inicio de sesión exitoso',
-        nombre: usuario.nombre,
-        _id: usuario._id
+        ...req.session.usuario // Include all session user data
       });
     } else {
       res.status(401).json({ mensaje: 'Credenciales incorrectas' });

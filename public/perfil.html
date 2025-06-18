@@ -195,6 +195,95 @@
       transform: translateY(-1px);
     }
 
+    select#tipoCuentaSelect option {
+      background-color: #1a1a2e; /* Dark background from body gradient */
+      color: #FFFFFF;           /* White text */
+      /* Padding or other properties might not be consistently applied by browsers */
+    }
+
+    select#tipoCuentaSelect option:hover {
+        background-color: #3b82f6; /* Example primary blue, for hover, if supported */
+        color: #FFFFFF;
+    }
+
+/* Styles for the switch container (if needed beyond inline) */
+.switch-container {
+  /* display: flex; already inline */
+  /* align-items: center; already inline */
+  /* justify-content: space-between; already inline */
+  margin-bottom: 10px; /* Reduced from 15px on the select */
+}
+
+/* The switch - a label element */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;  /* Width of the switch track */
+  height: 34px; /* Height of the switch track */
+  flex-shrink: 0; /* Prevent shrinking if container is too small */
+}
+
+/* Hide default HTML checkbox */
+.switch input#tipoCuentaSwitch {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider (track and knob) */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255,255,255,0.2); /* Track color when off (Privada) - similar to form input borders */
+  border: 1px solid rgba(255,255,255,0.3);
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 34px; /* Rounded track */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; /* Height of the knob */
+  width: 26px;  /* Width of the knob */
+  left: 4px;    /* Position of the knob when off */
+  bottom: 3px;  /* Position of the knob when off (considering border) */
+  background-color: white; /* Knob color */
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%; /* Rounded knob */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+input#tipoCuentaSwitch:checked + .slider {
+  background-color: #3b82f6; /* Track color when on (Pública) - primary blue */
+  border-color: #60a5fa;
+}
+
+input#tipoCuentaSwitch:focus + .slider {
+  box-shadow: 0 0 1px #3b82f6, 0 0 0 2px rgba(59, 130, 246, 0.2); /* Focus outline consistent with form-input */
+}
+
+input#tipoCuentaSwitch:checked + .slider:before {
+  -webkit-transform: translateX(26px); /* Move knob to the right when on */
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Adjustments for the descriptive paragraph below the switch */
+#accountPrivacySection > p { /* Targeting the <p> directly under accountPrivacySection */
+    font-size: 0.8em; 
+    color: rgba(255,255,255,0.7); 
+    text-align: center; 
+    /* margin-bottom is already inline, but can be centralized here if preferred */
+    /* margin-bottom: 15px; */ 
+    line-height: 1.4;
+}
+
     .form-textarea {
       resize: vertical;
       min-height: 100px;
@@ -469,6 +558,29 @@
         <p class="contador">➡️ Siguiendo: <span id="contadorSiguiendo">0</span></p>
         <button id="btnEnviarMensaje" class="btn btn-primary" style="display:none; margin-top: 10px; width:100%;">✉️ Enviar Mensaje</button>
       </div>
+
+      <!-- Account Privacy Settings -->
+      <div class="profile-setting" id="accountPrivacySection" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: none;">
+        <h4 style="font-weight: 600; font-size: 18px; color: #FFFFFF; margin-bottom: 15px;">Configuración de Privacidad de la Cuenta</h4>
+        
+        <!-- New Switch HTML -->
+        <div class="switch-container" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+          <span style="color: rgba(255,255,255,0.9);">Cuenta Privada</span>
+          <label class="switch">
+            <input type="checkbox" id="tipoCuentaSwitch">
+            <span class="slider round"></span>
+          </label>
+          <span style="color: rgba(255,255,255,0.9);">Cuenta Pública</span>
+        </div>
+        <p style="font-size: 0.8em; color: rgba(255,255,255,0.7); text-align: center; margin-bottom:15px;">
+          Si es Pública, cualquiera puede enviarte mensajes. Si es Privada, se requieren solicitudes para nuevos chats.
+        </p>
+        <!-- End New Switch HTML -->
+
+        <button id="guardarTipoCuentaBtn" class="btn btn-primary" style="width:100%;">💾 Guardar Preferencia</button>
+        <p id="tipoCuentaFeedback" style="font-size: 0.9em; margin-top: 10px; text-align:center;"></p>
+      </div>
+
     </div>
   </div>
 
@@ -492,7 +604,12 @@
     const btnEditarBiografia = document.getElementById('btnEditarBiografia');
     const btnEditarNombre = document.getElementById('btnEditarNombre');
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
-    
+
+    // DOM Elements for Account Type
+    let tipoCuentaSwitchEl; // Renamed from tipoCuentaSelectEl
+    let guardarTipoCuentaBtnEl;
+    let tipoCuentaFeedbackEl;
+    let accountPrivacySectionEl;
 
     // Event listeners
     biografiaTextarea.addEventListener('input', actualizarContador);
@@ -632,10 +749,16 @@
       const id = params.get('id');
       if (!id) return;
 
+      // Initialize Account Type DOM elements here, as they are part of the profile card
+      accountPrivacySectionEl = document.getElementById('accountPrivacySection');
+      tipoCuentaSwitchEl = document.getElementById('tipoCuentaSwitch'); // Updated ID
+      guardarTipoCuentaBtnEl = document.getElementById('guardarTipoCuentaBtn');
+      tipoCuentaFeedbackEl = document.getElementById('tipoCuentaFeedback');
+
       try {
         const res = await fetch('/usuarios/' + id);
-        if (!res.ok) throw new Error();
-        const usuario = await res.json();
+        if (!res.ok) throw new Error('Error al cargar datos del perfil');
+        const usuario = await res.json(); // This is the profile being viewed
         
         document.getElementById('nombrePerfil').textContent = usuario.nombre;
         document.getElementById('fechaPerfil').textContent = new Date(usuario.fechaRegistro).toLocaleDateString();
@@ -650,50 +773,116 @@
           biografiaDisplay.classList.add('vacia');
         }
 
-        const sesion = await fetch('/usuarios/session');
-        if (!sesion.ok) return;
-        usuarioActual = await sesion.json();
+        const sesionRes = await fetch('/usuarios/session');
+        if (!sesionRes.ok) { 
+            console.error("No se pudo obtener la sesión del usuario.");
+            // Potentially hide elements that depend on knowing the current user
+            if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
+            return; 
+        }
+        usuarioActual = await sesionRes.json(); // This is the logged-in user
 
-        if (usuarioActual._id === id) {
+        if (usuarioActual && usuarioActual._id === id) { // Check if logged-in user is viewing their own profile
           esPerfilPropio = true;
           btnEditarBiografia.style.display = 'inline-block';
           btnEditarNombre.style.display = 'inline-block';
           btnEditarContrasena.style.display = 'inline-block';
-        } else {
+          
+          // Show and setup account privacy settings only for own profile
+          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'block';
+          if(guardarTipoCuentaBtnEl) guardarTipoCuentaBtnEl.onclick = guardarTipoCuenta;
+          cargarPreferenciasUsuario(); // Load current preference into select
+
+        } else { // Viewing another user's profile
           esPerfilPropio = false;
+          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none'; // Hide privacy settings
           const sigue = usuario.seguidores.some(seg => seg._id === usuarioActual._id);
           const btn = document.getElementById('btnSeguir');
-          btn.style.display = 'inline-block';
-          btn.textContent = sigue ? 'Dejar de seguir' : 'Seguir';
-          btn.classList.toggle('dejar', sigue);
-          btn.onclick = async () => {
-            const res = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-            if (res.ok) cargarPerfil(); // Recargar para actualizar estado del botón y contadores
-          };
+          if (btn) { // Ensure button exists before manipulating
+            btn.style.display = 'inline-block';
+            btn.textContent = sigue ? 'Dejar de seguir' : 'Seguir';
+            btn.classList.toggle('dejar', sigue);
+            btn.onclick = async () => {
+              const resSeguir = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+              if (resSeguir.ok) cargarPerfil(); 
+            };
+          }
         }
 
         // Lógica para el botón de Enviar Mensaje
-        if (usuarioActual && usuarioActual._id !== id) { // Si es el perfil de otro usuario
+        if (usuarioActual && usuarioActual._id !== id) { 
             if(btnEnviarMensaje) {
-                btnEnviarMensaje.style.display = 'block'; // O 'inline-block' o lo que corresponda a .btn
+                btnEnviarMensaje.style.display = 'block'; 
                 btnEnviarMensaje.onclick = () => {
                     window.location.href = `mensajes.html?chatWith=${id}&chatWithNombre=${encodeURIComponent(usuario.nombre)}`;
                 };
             }
-        } else if (btnEnviarMensaje) { // Si es el perfil propio o no se pudo determinar usuarioActual
+        } else if (btnEnviarMensaje) { 
             btnEnviarMensaje.style.display = 'none';
         }
 
       } catch (e) {
-        showNotification('No se pudo cargar el perfil', 'error');
-        window.location.href = 'home.html';
+        showNotification(e.message || 'No se pudo cargar el perfil', 'error');
+        // Consider not redirecting immediately, maybe show error on page
+        // window.location.href = 'home.html'; 
+      }
+    }
+
+    async function cargarPreferenciasUsuario() {
+      if (usuarioActual && tipoCuentaSwitchEl) { // Check if usuarioActual and the switch element exist
+        if (typeof usuarioActual.tipoCuenta !== 'undefined') {
+          tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'publica');
+        } else {
+          console.warn('Tipo de cuenta no encontrado en datos de sesión para cargar preferencia del switch.');
+          // Default to false (privada) if not defined, or handle as error
+          tipoCuentaSwitchEl.checked = false; 
+        }
+      } else if (tipoCuentaFeedbackEl) { // Only use feedbackEl if it exists
+        console.warn('Switch o datos de usuario no disponibles para cargar preferencias.');
+      }
+    }
+
+    async function guardarTipoCuenta() {
+      if (!tipoCuentaSwitchEl || !tipoCuentaFeedbackEl) return; // Ensure elements exist
+       
+      const nuevoTipoCuenta = tipoCuentaSwitchEl.checked ? 'publica' : 'privada'; // Determine from checkbox state
+       
+      tipoCuentaFeedbackEl.textContent = ''; 
+
+      try {
+        const response = await fetch('/usuarios/me/tipoCuenta', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipoCuenta: nuevoTipoCuenta }) // Send string value
+        });
+         
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Error del servidor');
+        }
+         
+        tipoCuentaFeedbackEl.textContent = result.mensaje || 'Preferencia guardada.';
+        tipoCuentaFeedbackEl.style.color = 'green';
+        if(usuarioActual) usuarioActual.tipoCuenta = nuevoTipoCuenta; // Update local state
+
+      } catch (error) {
+        console.error('Error guardando tipo de cuenta:', error);
+        tipoCuentaFeedbackEl.textContent = error.message || 'Error al guardar la preferencia.';
+        tipoCuentaFeedbackEl.style.color = 'red';
+        // Revert checkbox state if possible
+        if (usuarioActual && typeof usuarioActual.tipoCuenta !== 'undefined') {
+           tipoCuentaSwitchEl.checked = (usuarioActual.tipoCuenta === 'publica');
+        }
       }
     }
 
     cargarPerfil();
-    setInterval(() => {
-      if (!esPerfilPropio) cargarPerfil();
-    }, 3000);
+    // Removed setInterval for reloading other user's profile, as it can be disruptive.
+    // A manual refresh or other UX would be better for that.
+    // setInterval(() => {
+    //  if (!esPerfilPropio) cargarPerfil();
+    // }, 3000);
   </script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script type="text/javascript" src="notifications.js"></script>
