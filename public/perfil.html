@@ -982,7 +982,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
           if (btnSeguir && usuarioActual && usuarioActual.seguidos) { // Check if app.user (usuarioActual) and seguidos are available
               btnSeguir.style.display = 'inline-block'; 
 
-              let isFollowing = usuarioActual.seguidos.includes(profileUserId);
+              let isFollowing = usuarioActual.seguidos.includes(currentProfileUserId);
               btnSeguir.textContent = isFollowing ? 'Dejar de Seguir' : 'Seguir';
               if(isFollowing) {
                 btnSeguir.classList.add('unfollow-btn');
@@ -1004,8 +1004,8 @@ input#tipoCuentaSwitch:checked + .slider:before {
                   // showUpdateIndicator(); // Assuming showUpdateIndicator is available globally or via utils
                   
                   // Re-check current follow state from usuarioActual.seguidos before making API call
-                  isFollowing = usuarioActual.seguidos.includes(profileUserId); 
-                  const endpoint = isFollowing ? `/usuarios/${profileUserId}/unfollow` : `/usuarios/${profileUserId}/follow`;
+                  isFollowing = usuarioActual.seguidos.includes(currentProfileUserId); 
+                  const endpoint = isFollowing ? `/usuarios/${currentProfileUserId}/unfollow` : `/usuarios/${currentProfileUserId}/follow`;
                   
                   const fetchOptions = {
                     method: 'POST',
@@ -1022,10 +1022,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
 
                   // Update usuarioActual.seguidos locally for immediate UI consistency
                   if (isFollowing) { // User was unfollowing
-                    usuarioActual.seguidos = usuarioActual.seguidos.filter(id => id !== profileUserId);
+                    usuarioActual.seguidos = usuarioActual.seguidos.filter(id => id !== currentProfileUserId);
                   } else { // User was following
                     if (!usuarioActual.seguidos) usuarioActual.seguidos = [];
-                    usuarioActual.seguidos.push(profileUserId);
+                    usuarioActual.seguidos.push(currentProfileUserId);
                   }
                   
                   // Update button text and class after successful action
