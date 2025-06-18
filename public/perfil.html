@@ -462,6 +462,12 @@ input#tipoCuentaSwitch:checked + .slider:before {
     #btnSeguir.dejar:hover {
       box-shadow: 0 15px 30px rgba(239, 68, 68, 0.5);
     }
+    #btnSeguir.unfollow-btn {
+      background: linear-gradient(135deg, #f56565, #c53030); /* Example: Reddish for unfollow */
+    }
+    #btnSeguir.unfollow-btn:hover {
+      box-shadow: 0 6px 20px rgba(245, 101, 101, 0.5);
+    }
 
     .edit-buttons {
       margin-top: 20px;
@@ -526,6 +532,75 @@ input#tipoCuentaSwitch:checked + .slider:before {
         .settings-column-left {
             margin-bottom: 0px; /* Remove space below the privacy column when side by side */
         }
+    }
+
+    /* Basic Modal Styling */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1000; /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgba(0,0,0,0.6); /* Black w/ opacity - overlay */
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background-color: #1e1e3f; /* Dark background for modal content */
+      color: #e0e6ed;
+      margin: 10% auto; /* 10% from the top and centered */
+      padding: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      width: 80%; /* Could be more specific e.g. 500px */
+      max-width: 500px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      position: relative; /* For positioning the close button */
+      animation: fadeInModal 0.3s ease-out; /* Re-use existing animation if available */
+    }
+    
+    /* fadeInModal is already defined for logoutModal, so no need to redefine */
+
+    .close-btn {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-list {
+      list-style-type: none;
+      padding: 0;
+      max-height: 300px; /* Example max height for scroll */
+      overflow-y: auto;
+    }
+
+    .modal-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .modal-list li:last-child {
+      border-bottom: none;
+    }
+    .modal-list li a {
+      color: #8ab4f8; /* Light blue for links, adjust as needed */
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .modal-list li a:hover {
+      text-decoration: underline;
     }
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -594,7 +669,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
       <div class="perfil-datos">
         <p>📅 Registrado desde: <span id="fechaPerfil"></span></p>
         
-        <button id="btnSeguir" style="display:none">Seguir</button>
+        <button id="btnSeguir">Seguir</button>
         
         <p class="contador">👥 Seguidores: <span id="contadorSeguidores">0</span></p>
         <p class="contador">➡️ Siguiendo: <span id="contadorSiguiendo">0</span></p>
@@ -606,9 +681,40 @@ input#tipoCuentaSwitch:checked + .slider:before {
     </div>
   </div>
 
+  <!-- Followers Modal -->
+  <div id="followersModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeFollowersModal">&times;</span>
+      <h2>Seguidores</h2>
+      <ul id="followersListContent" class="modal-list">
+        <!-- Follower items will be populated here -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Following Modal -->
+  <div id="followingModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeFollowingModal">&times;</span>
+      <h2>Siguiendo</h2>
+      <ul id="followingListContent" class="modal-list">
+        <!-- Following items will be populated here -->
+      </ul>
+    </div>
+  </div>
+
   <script>
     let esPerfilPropio = false;
     let usuarioActual = null;
+    let currentProfileUserId = null; // Will be set in cargarPerfil
+
+    // Modal DOM Elements
+    const followersModal = document.getElementById('followersModal');
+    const followingModal = document.getElementById('followingModal');
+    const closeFollowersModalBtn = document.getElementById('closeFollowersModal');
+    const closeFollowingModalBtn = document.getElementById('closeFollowingModal');
+    const followersListContent = document.getElementById('followersListContent');
+    const followingListContent = document.getElementById('followingListContent');
 
     // Elementos del DOM
     const btnEnviarMensaje = document.getElementById('btnEnviarMensaje');
@@ -819,10 +925,24 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (!res.ok) throw new Error('Error al cargar datos del perfil');
         const usuario = await res.json(); // This is the profile being viewed
         
+        currentProfileUserId = usuario._id; // Store the profile user's ID
+
         document.getElementById('nombrePerfil').textContent = usuario.nombre;
         document.getElementById('fechaPerfil').textContent = new Date(usuario.fechaRegistro).toLocaleDateString();
-        document.getElementById('contadorSeguidores').textContent = usuario.seguidores.length;
-        document.getElementById('contadorSiguiendo').textContent = usuario.seguidos.length;
+        const contadorSeguidoresSpan = document.getElementById('contadorSeguidores');
+        const contadorSiguiendoSpan = document.getElementById('contadorSiguiendo');
+
+        if(contadorSeguidoresSpan) {
+            contadorSeguidoresSpan.textContent = usuario.seguidores ? usuario.seguidores.length : 0;
+            contadorSeguidoresSpan.parentElement.style.cursor = 'pointer';
+            contadorSeguidoresSpan.parentElement.onclick = () => showFollowersModal(currentProfileUserId);
+        }
+        if(contadorSiguiendoSpan) {
+            contadorSiguiendoSpan.textContent = usuario.seguidos ? usuario.seguidos.length : 0;
+            contadorSiguiendoSpan.parentElement.style.cursor = 'pointer';
+            contadorSiguiendoSpan.parentElement.onclick = () => showFollowingModal(currentProfileUserId);
+        }
+
 
         if (usuario.biografia && usuario.biografia.trim()) {
           biografiaDisplay.textContent = usuario.biografia;
@@ -859,60 +979,83 @@ input#tipoCuentaSwitch:checked + .slider:before {
           if(configuracionSection) configuracionSection.style.display = 'none'; // Ensure settings section is hidden
           
           const btnSeguir = document.getElementById('btnSeguir');
-          if (btnSeguir) {
-              btnSeguir.style.display = 'inline-block';
-              btnSeguir.disabled = false; // Reset disabled state
+          if (btnSeguir && usuarioActual && usuarioActual.seguidos) { // Check if app.user (usuarioActual) and seguidos are available
+              btnSeguir.style.display = 'inline-block'; 
 
-              const yaSigue = usuario.seguidores.some(seg => seg._id === usuarioActual._id);
-
-              if (yaSigue) {
-                  btnSeguir.textContent = 'Dejar de seguir';
-                  btnSeguir.classList.add('dejar');
-                  btnSeguir.onclick = async () => {
-                      const resUnfollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-                      if (resUnfollow.ok) cargarPerfil(); // Reload profile to update state
-                  };
+              let isFollowing = usuarioActual.seguidos.includes(profileUserId);
+              btnSeguir.textContent = isFollowing ? 'Dejar de Seguir' : 'Seguir';
+              if(isFollowing) {
+                btnSeguir.classList.add('unfollow-btn');
               } else {
-                  // Not yet following
-                  if (usuario.tipoCuenta === 'privada') {
-                      btnSeguir.textContent = 'Solicitar seguimiento';
-                      btnSeguir.classList.remove('dejar'); // Ensure it's not styled as 'dejar' initially
-                      btnSeguir.onclick = async () => {
-                          try {
-                              const resSolicitud = await fetch(`/api/solicitudes-seguimiento/${id}`, { 
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' }
-                              });
-                              const resultado = await resSolicitud.json();
-
-                              if (resSolicitud.ok) {
-                                  showNotification(resultado.mensaje || 'Solicitud enviada.', 'success');
-                                  btnSeguir.textContent = 'Solicitud enviada';
-                                  btnSeguir.disabled = true;
-                                  btnSeguir.classList.add('dejar'); // Use 'dejar' style for pending
-                              } else {
-                                  showNotification(resultado.mensaje || 'No se pudo enviar la solicitud.', 'error');
-                                  if (resultado.mensaje && resultado.mensaje.toLowerCase().includes('pendiente')) {
-                                       btnSeguir.textContent = 'Solicitud enviada';
-                                       btnSeguir.disabled = true;
-                                       btnSeguir.classList.add('dejar');
-                                  }
-                              }
-                          } catch (err) {
-                              console.error("Error sending follow request:", err);
-                              showNotification('Error al conectar con el servidor.', 'error');
-                          }
-                      };
-                  } else { // Public account or tipoCuenta not defined
-                      btnSeguir.textContent = 'Seguir';
-                      btnSeguir.classList.remove('dejar');
-                      btnSeguir.onclick = async () => {
-                          const resFollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-                          if (resFollow.ok) cargarPerfil(); // Reload profile to update state
-                      };
-                  }
+                btnSeguir.classList.remove('unfollow-btn');
               }
-          }
+
+              // Clone and replace button to remove previous listeners if any, then re-fetch
+              const oldBtnSeguir = btnSeguir;
+              const newBtnSeguir = oldBtnSeguir.cloneNode(true);
+              oldBtnSeguir.parentNode.replaceChild(newBtnSeguir, oldBtnSeguir);
+              
+              newBtnSeguir.addEventListener('click', async () => {
+                if (!usuarioActual) { 
+                  showNotification('Debes iniciar sesión para seguir a usuarios.', 'error');
+                  return;
+                }
+                try {
+                  // showUpdateIndicator(); // Assuming showUpdateIndicator is available globally or via utils
+                  
+                  // Re-check current follow state from usuarioActual.seguidos before making API call
+                  isFollowing = usuarioActual.seguidos.includes(profileUserId); 
+                  const endpoint = isFollowing ? `/usuarios/${profileUserId}/unfollow` : `/usuarios/${profileUserId}/follow`;
+                  
+                  const fetchOptions = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                  };
+                  // No body is needed for these POST requests as per current server implementation
+
+                  const res = await fetch(endpoint, fetchOptions);
+                  const response = await res.json();
+
+                  if (!res.ok) {
+                    throw new Error(response.error || `Error ${res.status}`);
+                  }
+
+                  // Update usuarioActual.seguidos locally for immediate UI consistency
+                  if (isFollowing) { // User was unfollowing
+                    usuarioActual.seguidos = usuarioActual.seguidos.filter(id => id !== profileUserId);
+                  } else { // User was following
+                    if (!usuarioActual.seguidos) usuarioActual.seguidos = [];
+                    usuarioActual.seguidos.push(profileUserId);
+                  }
+                  
+                  // Update button text and class after successful action
+                  isFollowing = !isFollowing; 
+                  newBtnSeguir.textContent = isFollowing ? 'Dejar de Seguir' : 'Seguir';
+                  if(isFollowing) {
+                    newBtnSeguir.classList.add('unfollow-btn');
+                  } else {
+                    newBtnSeguir.classList.remove('unfollow-btn');
+                  }
+
+                  // Update follower count on the page
+                  const contadorSeguidores = document.getElementById('contadorSeguidores');
+                  let currentFollowers = parseInt(contadorSeguidores.textContent); 
+                  contadorSeguidores.textContent = isFollowing ? currentFollowers + 1 : currentFollowers - 1;
+                  
+                  showNotification(response.message, 'success');
+
+                } catch (error) {
+                  console.error('Error en la acción de seguir/dejar de seguir:', error);
+                  showNotification(error.message || 'Error al procesar la solicitud.', 'error');
+                }
+              });
+            } else if (btnSeguir && usuarioActual && !usuarioActual.seguidos) {
+                console.warn("usuarioActual.seguidos is not populated. Follow button state may be incorrect.");
+                btnSeguir.style.display = 'none'; 
+                showNotification("No se pudo determinar el estado de seguimiento. Intenta recargar.", "warning");
+            } else if (btnSeguir) {
+                btnSeguir.style.display = 'none';
+            }
         }
 
         // Lógica para el botón de Enviar Mensaje
@@ -940,6 +1083,94 @@ input#tipoCuentaSwitch:checked + .slider:before {
     // setInterval(() => {
     //  if (!esPerfilPropio) cargarPerfil();
     // }, 3000);
+
+    async function showFollowersModal(userId) {
+      if (!userId) return;
+      try {
+        // Assuming utils object with showUpdateIndicator and apiCall is available
+        // If not, implement direct fetch and loading indicators.
+        if (typeof utils !== 'undefined' && utils.showUpdateIndicator) utils.showUpdateIndicator();
+        
+        const followers = await (typeof utils !== 'undefined' ? utils.apiCall(`/usuarios/${userId}/seguidores`) : fetch(`/usuarios/${userId}/seguidores`).then(res => res.json()));
+        
+        followersListContent.innerHTML = ''; // Clear previous content
+        if (followers.length === 0) {
+          followersListContent.innerHTML = '<li>No hay seguidores para mostrar.</li>';
+        } else {
+          followers.forEach(user => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="perfil.html?id=${user._id}">${user.nombre}</a>`;
+            followersListContent.appendChild(li);
+          });
+        }
+        followersModal.style.display = 'block';
+      } catch (error) {
+        console.error('Error al cargar seguidores:', error);
+        if (typeof utils !== 'undefined' && utils.showMessage) {
+            utils.showMessage('Error al cargar la lista de seguidores.', 'error');
+        } else {
+            showNotification('Error al cargar la lista de seguidores.', 'error'); // Fallback if utils not present
+        }
+      }
+    }
+
+    async function showFollowingModal(userId) {
+      if (!userId) return;
+      try {
+        if (typeof utils !== 'undefined' && utils.showUpdateIndicator) utils.showUpdateIndicator();
+        const following = await (typeof utils !== 'undefined' ? utils.apiCall(`/usuarios/${userId}/siguiendo`) : fetch(`/usuarios/${userId}/siguiendo`).then(res => res.json()));
+        
+        followingListContent.innerHTML = ''; // Clear previous content
+        if (following.length === 0) {
+          followingListContent.innerHTML = '<li>No sigue a ningún usuario.</li>';
+        } else {
+          following.forEach(user => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="perfil.html?id=${user._id}">${user.nombre}</a>`;
+            followingListContent.appendChild(li);
+          });
+        }
+        followingModal.style.display = 'block';
+      } catch (error) {
+        console.error('Error al cargar usuarios seguidos:', error);
+         if (typeof utils !== 'undefined' && utils.showMessage) {
+            utils.showMessage('Error al cargar la lista de usuarios seguidos.', 'error');
+        } else {
+            showNotification('Error al cargar la lista de usuarios seguidos.', 'error');
+        }
+      }
+    }
+
+    if (closeFollowersModalBtn) {
+      closeFollowersModalBtn.onclick = () => {
+        followersModal.style.display = 'none';
+      };
+    }
+    if (closeFollowingModalBtn) {
+      closeFollowingModalBtn.onclick = () => {
+        followingModal.style.display = 'none';
+      };
+    }
+
+    // Keep existing window.onclick for logoutModal if it exists, and add to it.
+    const existingWindowOnClick = window.onclick;
+    window.onclick = function(event) {
+      if (existingWindowOnClick) {
+        existingWindowOnClick(event); // Call existing handler
+      }
+      if (event.target == followersModal) {
+        followersModal.style.display = 'none';
+      }
+      if (event.target == followingModal) {
+        followingModal.style.display = 'none';
+      }
+      // This check should be specific to the logout modal if it's also handled here.
+      // If logoutModal is defined and is the target, this will handle it.
+      // This assumes logoutModal is a global variable accessible here.
+      if (typeof logoutModal !== 'undefined' && event.target == logoutModal) {
+         logoutModal.style.display = "none";
+      }
+    };
   </script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script type="text/javascript" src="notifications.js"></script>

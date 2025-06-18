@@ -24,16 +24,24 @@ const ChatPrivilegioSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
-  isArchived: { 
+  isHidden: { // Renamed from isArchived
     type: Boolean, 
     default: false, 
     index: true 
   },
-  archivedBy: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Usuario', 
-    default: null 
+  // archivedBy is removed
+  // archivedViewHiddenBy is removed
+  hiddenForUsers: [{ // New field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Usuario',
+    default: [] // Default to an empty array
+  }],
+  initiatorOfHide: { // New field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Usuario',
+    default: null
   }
+  // statusForOtherUser field is removed
 });
 
 // Ensure that for any pair of solicitante and receptor, there's only one document.

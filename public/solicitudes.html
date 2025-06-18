@@ -88,126 +88,43 @@
 </head>
 <body>
   <div class="container">
-    <h2>Solicitudes de Seguimiento Pendientes</h2>
+    <h2>Solicitudes</h2> <!-- Generic Title -->
     <div id="lista-solicitudes">
-      <!-- Solicitudes will be loaded here by JavaScript -->
+      <p class="no-solicitudes">Esta página ya no se utiliza para las solicitudes de seguimiento.</p>
+      <p class="no-solicitudes">Las solicitudes de mensajes (si aplica) se manejan en la página de mensajes.</p>
     </div>
     <a href="home.html" class="nav-link">Volver a Inicio</a>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
-    // Helper function for notifications (ensure notifications.js is loaded or define showNotification)
+    // All JavaScript related to follow requests has been removed.
+    // Helper function for notifications (can be kept if other pages might use it via copy-paste, or removed if truly orphaned)
     function showNotification(message, type = 'info') {
         Toastify({
             text: message,
             duration: 3000,
             close: true,
-            gravity: "top", // `top` or `bottom`
-            position: "right", // `left`, `center` or `right`
+            gravity: "top", 
+            position: "right", 
             backgroundColor: type === 'success' ? "linear-gradient(to right, #00b09b, #96c93d)" : "linear-gradient(to right, #ff5f6d, #ffc371)",
         }).showToast();
     }
 
-    async function cargarSolicitudes() {
-      const listaSolicitudesDiv = document.getElementById('lista-solicitudes');
-      listaSolicitudesDiv.innerHTML = ''; // Clear previous list
-
-      try {
-        const res = await fetch('/api/solicitudes-seguimiento/recibidas');
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.mensaje || 'Error al cargar solicitudes');
-        }
-        const solicitudes = await res.json();
-
-        if (solicitudes.length === 0) {
-          listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">No tienes solicitudes de seguimiento pendientes.</p>';
-          return;
-        }
-
-        solicitudes.forEach(solicitud => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'solicitud-item';
-          itemDiv.id = `solicitud-${solicitud._id}`;
-
-          const userInfo = document.createElement('p');
-          userInfo.textContent = `${solicitud.solicitante.nombre} quiere seguirte.`;
-          
-          const actionsDiv = document.createElement('div');
-          actionsDiv.className = 'actions';
-
-          const btnAceptar = document.createElement('button');
-          btnAceptar.className = 'btn-aceptar';
-          btnAceptar.textContent = 'Aceptar';
-          btnAceptar.onclick = () => manejarSolicitud(solicitud._id, 'aceptar');
-
-          const btnRechazar = document.createElement('button');
-          btnRechazar.className = 'btn-rechazar';
-          btnRechazar.textContent = 'Rechazar';
-          btnRechazar.onclick = () => manejarSolicitud(solicitud._id, 'rechazar');
-
-          actionsDiv.appendChild(btnAceptar);
-          actionsDiv.appendChild(btnRechazar);
-          itemDiv.appendChild(userInfo);
-          itemDiv.appendChild(actionsDiv);
-          listaSolicitudesDiv.appendChild(itemDiv);
-        });
-
-      } catch (error) {
-        console.error('Error cargando solicitudes:', error);
-        listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">Error al cargar solicitudes.</p>';
-        showNotification(error.message, 'error');
-      }
-    }
-
-    async function manejarSolicitud(solicitudId, accion) {
-      try {
-        const res = await fetch(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        const resultado = await res.json();
-
-        if (res.ok) {
-          showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
-          // Remove the item from the list
-          const itemToRemove = document.getElementById(`solicitud-${solicitudId}`);
-          if (itemToRemove) {
-            itemToRemove.remove();
-          }
-          // Check if list is now empty
-          const listaSolicitudesDiv = document.getElementById('lista-solicitudes');
-          if (!listaSolicitudesDiv.hasChildNodes() || listaSolicitudesDiv.children.length === 0 || (listaSolicitudesDiv.children.length === 1 && listaSolicitudesDiv.firstChild.classList && listaSolicitudesDiv.firstChild.classList.contains('no-solicitudes'))) {
-             listaSolicitudesDiv.innerHTML = '<p class="no-solicitudes">No tienes solicitudes de seguimiento pendientes.</p>';
-          }
-
-        } else {
-          throw new Error(resultado.mensaje || `Error al ${accion} la solicitud.`);
-        }
-      } catch (error) {
-        console.error(`Error al ${accion} la solicitud:`, error);
-        showNotification(error.message, 'error');
-      }
-    }
-
-    // Verificar sesión antes de cargar
+    // Verificar sesión (kept for potential redirection if page is accessed directly without session)
     async function verificarSesionYcargar() {
         try {
             const res = await fetch('/usuarios/session');
             if (!res.ok) {
-                // No hay sesión activa o error al verificar
-                window.location.href = 'index.html'; // Redirigir a login
+                window.location.href = 'index.html'; 
                 return;
             }
-            // Sesión activa, cargar solicitudes
-            cargarSolicitudes();
+            // No specific data to load on this page anymore.
         } catch (error) {
             console.error("Error verificando sesión:", error);
-            window.location.href = 'index.html'; // Redirigir a login en caso de error de red etc.
+            window.location.href = 'index.html'; 
         }
     }
-
     document.addEventListener('DOMContentLoaded', verificarSesionYcargar);
   </script>
 </body>

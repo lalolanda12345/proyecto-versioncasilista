@@ -321,12 +321,14 @@
   <div class="content">
     <!-- First column for requests and conversations list -->
     <div id="conversationsColumn">
-        <div class="panel" id="solicitudesPanel"> <!-- NEW PANEL -->
+        <div class="panel" id="solicitudesPanel">
             <h3>Solicitudes de Mensajes Pendientes</h3>
             <ul id="listaSolicitudesMensajes" class="user-list">
                 <!-- Request items will be populated here by JS -->
             </ul>
         </div>
+
+        <!-- Reactivation Requests Panel REMOVED -->
 
       <div class="panel" id="conversacionesPanel">
         <h3>Conversaciones</h3>
@@ -360,14 +362,7 @@
     </div>
   </div>
 
-  <!-- Archive Chat Confirmation Modal -->
-  <div id="archiveChatModal">
-    <div class="archive-modal-content">
-      <p>Are you sure you want to archive this chat? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.</p>
-      <button id="confirmArchiveBtn" class="btn">Confirm Archive</button>
-      <button id="cancelArchiveBtn" class="btn">Cancel Archive</button>
-    </div>
-  </div>
+  <!-- Archive Chat Confirmation Modal is REMOVED -->
 
   <script>
     // Global app state
@@ -376,15 +371,16 @@
       currentChatPartnerId: null,
       currentChatPartnerName: null,
       chatPollInterval: null,
-      archivingChatPartnerId: null, 
-      currentChatArchivalStatus: null, // Added for current chat's archival state
+      // archivingChatPartnerId: null, // Obsolete
+      // currentChatArchivalStatus: null, // Obsolete
     };
 
     // DOM Elements 
     let listaConversacionesEl, chatPanelEl, chatUserNameEl, chatMessagesEl, chatMessageInputEl, sendChatMessageBtnEl, chatPlaceholderEl;
-    let listaSolicitudesMensajesEl; // Added for message requests
+    let listaSolicitudesMensajesEl; 
+    // let listaSolicitudesReactivacionEl; // Fully Removed
     let homeBtnEl, profileBtnEl, logoutBtnEl, logoutModal, confirmLogoutBtn, cancelLogoutBtn, updateIndicator;
-    let archiveChatModal, confirmArchiveBtn, cancelArchiveBtn; // Added for chat archival
+    // archiveChatModal, confirmArchiveBtn, cancelArchiveBtn are Obsolete
 
     // [FROM HOME.HTML] Full 'utils' object definition:
     const utils = {
@@ -639,7 +635,7 @@
        if(chatUserNameEl) chatUserNameEl.textContent = userName;
        if(chatPanelEl) chatPanelEl.style.display = 'block';
        
-       app.currentChatArchivalStatus = null; // Reset archival status for the new chat
+       // app.currentChatArchivalStatus = null; // Obsolete
 
        // Enable inputs and clear previous status messages by default
        if(chatMessageInputEl) chatMessageInputEl.disabled = false;
@@ -668,63 +664,90 @@
         if (!app.currentChatPartnerId || !app.user || !chatMessagesEl) return;
 
         let messages = [];
-        // Use locally optimistic archival status if available, especially for polling after self-archival
-        let archivalStatus = app.currentChatArchivalStatus || { isArchived: false, archivedByMe: false, archivedBy: null, chatPrivilegioEstado: 'none' };
+        // Default status, including new chatPrivilegioId
+        let chatStatus = { 
+            isHidden: false, 
+            chatPrivilegioEstado: 'none', 
+            showPendingActionNotification: false,
+            showReactivationPendingNotification: false,
+            initiatorName: null,
+            allowMessageSending: true,
+            chatPrivilegioId: null 
+        };
         
         try {
-            // Avoid re-fetching full status if polling and already showing local archival status for initiator (self-archived)
-            // However, always fetch if not polling, or if chat isn't known to be archived by self (could be by other, or unarchived)
-            if (!isPolling || !app.currentChatArchivalStatus?.archivedByMe) {
-                const response = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
-                messages = response.messages || []; // Ensure messages is an array
-                archivalStatus = response.archivalStatus || archivalStatus; // Fallback to existing if not provided
-                app.currentChatArchivalStatus = archivalStatus; // Update global state
-            } else if (app.currentChatArchivalStatus?.archivedByMe && isPolling) {
-                // If polling and chat is known to be archived by THIS client, we still need fresh messages (e.g. if other user unarchived and sent a message)
-                // And we must get fresh archival status in case the other user unarchived it.
-                const response = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
-                messages = response.messages || [];
-                if (response.archivalStatus && !response.archivalStatus.isArchived) { // If backend says it's no longer archived
-                    app.currentChatArchivalStatus = response.archivalStatus;
-                    archivalStatus = response.archivalStatus;
-                } else {
-                    // If backend still says archived (or no status change), keep our local view (archivedByMe)
-                    archivalStatus = app.currentChatArchivalStatus; 
-                }
-            }
+            const response = await utils.apiCall(`/mensajes/conversacion/${app.user._id}/${app.currentChatPartnerId}`);
+            messages = response.messages || [];
+            chatStatus = response.chatStatus || chatStatus; // Use server status or default
+            
+            app.currentChatPrivilegioId = chatStatus.chatPrivilegioId; // Store for use in requestReactivation
 
-            // --- Centralized UI Update Logic ---
-            chatMessagesEl.innerHTML = ''; // Clear previous messages and status elements
+            chatMessagesEl.innerHTML = ''; // Clear previous messages
+            const existingStatusElements = chatMessagesEl.querySelectorAll('.chat-status-message, .chat-action-buttons');
+            existingStatusElements.forEach(el => el.remove()); // Clear old custom UI
 
-            if (archivalStatus && archivalStatus.isArchived) {
-                if (messages && messages.length > 0) {
-                    messages.forEach(msg => this.renderMessage(msg));
-                }
-                if (archivalStatus.archivedByMe) {
-                    this.displayArchivedByMeMessage();
-                } else { // Archived by other user (or by system if archivedBy is null but isArchived is true)
-                    this.displayArchivedByOtherUserMessageAndActions();
-                }
-                if (chatMessageInputEl) chatMessageInputEl.disabled = true;
-                if (sendChatMessageBtnEl) sendChatMessageBtnEl.disabled = true;
-            } else { // Not archived
-                if (messages && messages.length > 0) {
-                    messages.forEach(msg => this.renderMessage(msg));
-                } else {
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => this.renderMessage(msg));
+            } else {
+                // Only show "No hay mensajes" if no other status notification is shown
+                if (!chatStatus.showPendingActionNotification && !chatStatus.showReactivationPendingNotification) {
                     chatMessagesEl.innerHTML = '<p style="text-align:center; color:#888e9e !important; font-style: italic !important; padding: 25px !important;">No hay mensajes. ¡Envía el primero!</p>';
                 }
-                if (chatMessageInputEl) chatMessageInputEl.disabled = false;
-                if (sendChatMessageBtnEl) sendChatMessageBtnEl.disabled = false;
-                
-                // TODO: Further UI changes based on archivalStatus.chatPrivilegioEstado (e.g., 'pendiente', 'bloqueado')
-                // For example, if 'pendiente', might disable input and show "Waiting for user to accept request"
             }
+            
+            // Handle UI based on chatStatus
+            if (chatStatus.showPendingActionNotification) {
+                chatMessageInputEl.disabled = true;
+                sendChatMessageBtnEl.disabled = true;
+                
+                const notificationP = document.createElement('p');
+                notificationP.className = 'chat-status-message';
+                notificationP.innerHTML = `${chatStatus.initiatorName || 'El otro usuario'} ha ocultado esta conversación.`;
+                notificationP.style.textAlign = 'center'; 
+                notificationP.style.fontStyle = 'italic'; 
+                notificationP.style.margin = '10px 0';
+                chatMessagesEl.appendChild(notificationP); // Append below messages
+
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'chat-action-buttons';
+                buttonsDiv.style.textAlign = 'center';
+                buttonsDiv.style.margin = '10px 0';
+                // app.currentChatPartnerId here is User A (initiatorOfHide)
+                buttonsDiv.innerHTML = `
+                    <button id="confirmDeleteBtn" class="btn btn-danger btn-sm">Eliminar este chat</button>
+                `;
+                chatMessagesEl.appendChild(buttonsDiv); // Append below notification
+
+                // Event listener for the delete button
+                if(document.getElementById('confirmDeleteBtn')) document.getElementById('confirmDeleteBtn').onclick = () => chat.confirmDeleteSharedChat(app.currentChatPartnerId); 
+                // Removed event listener for requestReactivateBtn as the button is removed
+
+            } else if (chatStatus.showReactivationPendingNotification) {
+                chatMessageInputEl.disabled = true;
+                sendChatMessageBtnEl.disabled = true;
+                const notificationP = document.createElement('p');
+                notificationP.className = 'chat-status-message';
+                notificationP.innerHTML = `Solicitud de reactivación enviada a ${chatStatus.initiatorName || 'El otro usuario'}. Esperando respuesta.`;
+                notificationP.style.textAlign = 'center'; 
+                notificationP.style.fontStyle = 'italic'; 
+                notificationP.style.margin = '10px 0';
+                chatMessagesEl.appendChild(notificationP); // Append below messages
+            }
+            else if (!chatStatus.allowMessageSending) { 
+                // General case if server dictates messages cannot be sent, and no specific notification shown above
+                chatMessageInputEl.disabled = true;
+                sendChatMessageBtnEl.disabled = true;
+                // Optionally, add a generic "No puedes enviar mensajes en este momento" if not covered by other states.
+            } else {
+              chatMessageInputEl.disabled = false;
+              sendChatMessageBtnEl.disabled = false;
+            }
+            
             chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 
         } catch (error) {
             console.error('Error loading messages:', error);
-            if (!isPolling && chatMessagesEl) { // Show error only on initial load or non-polling refresh
-                 // Clear previous content before showing error
+            if (!isPolling && chatMessagesEl) {
                 chatMessagesEl.innerHTML = '<p style="text-align:center; color:red;">Error al cargar mensajes. Intenta de nuevo.</p>';
             }
         }
@@ -748,6 +771,12 @@
        if(!chatMessageInputEl || !app.currentChatPartnerId || !app.user) return;
        const content = chatMessageInputEl.value.trim();
        if (!content) return;
+
+       // Prevent sending messages to self
+       if (app.user._id === app.currentChatPartnerId) {
+         utils.showMessage('No puedes enviarte mensajes a ti mismo.', 'warning');
+         return;
+       }
 
        try {
          const response = await utils.apiCall('/mensajes', { // This call now returns {type, data} or error
@@ -818,98 +847,89 @@
        }
      },
 
-     async archiveConversation(partnerUserId) {
+     async hideConversation(partnerUserId) { // Renamed from archiveConversation
         if (!app.user || !partnerUserId) return;
         try {
-          utils.showUpdateIndicator(); // Show activity
-          await utils.apiCall(`/mensajes/conversacion/${partnerUserId}/archive`, {
+          utils.showUpdateIndicator(); 
+          await utils.apiCall(`/mensajes/conversacion/${partnerUserId}/hide`, { // New endpoint
             method: 'POST',
           });
-          utils.showMessage('Chat archivado exitosamente.', 'success');
+          utils.showMessage('Conversación oculta.', 'success'); // Updated message
       
+          await this.loadConversations(); // Refresh conversation list
+      
+          // If the hidden conversation was currently open, reset the chat panel
           if (app.currentChatPartnerId === partnerUserId) {
-            // Optimistically update local archival status
-            app.currentChatArchivalStatus = {
-                isArchived: true,
-                archivedByMe: true, // Current user initiated this
-                archivedBy: app.user._id, // Current user's ID
-                // Preserve existing privilegio state if known, else default or assume 'activo'
-                chatPrivilegioEstado: app.currentChatArchivalStatus ? app.currentChatArchivalStatus.chatPrivilegioEstado : 'activo' 
-            };
-            // The UI update will be handled by loadMessages
+              chatPanelEl.style.display = 'none'; 
+              app.currentChatPartnerId = null;
+              app.currentChatPartnerName = null;
+              chat.stopPollingMessages();
+              
+              // Reset to placeholder view
+              if (chatPlaceholderEl && chatPanelEl) {
+                  chatPanelEl.style.display = 'block';
+                  chatMessagesEl.innerHTML = '';
+                  if (chatUserNameEl) chatUserNameEl.textContent = 'Usuario';
+                  chatPlaceholderEl.style.display = 'block';
+                  chatPlaceholderEl.innerHTML = 'Selecciona una conversación de la lista para empezar a chatear.';
+                  const inputArea = document.querySelector('.chat-input-area');
+                  if (inputArea) inputArea.style.display = 'none';
+                  history.pushState(null, '', 'mensajes.html');
+              }
           }
-      
-          await this.loadConversations(); // Refresh conversation list in the sidebar
-          if (app.currentChatPartnerId === partnerUserId) {
-            await this.loadMessages(false); // Force reload of current chat messages to apply archival UI
-          }
-      
         } catch (error) {
-          console.error('Error archiving chat:', error);
+          console.error('Error al ocultar la conversación:', error); // Updated error message
           // utils.apiCall should handle showing a generic error message.
         }
       },
 
-      displayArchivedByMeMessage() {
-        if (!chatMessagesEl) return;
-        const existingStatusMsg = chatMessagesEl.querySelector('.chat-status-message');
-        if (existingStatusMsg) existingStatusMsg.remove(); // Remove old one first
+      // displayArchivedByMeMessage, displayArchivedByOtherUserMessageAndActions, 
+      // acknowledgeArchive, and requestReopenChat are REMOVED as they are obsolete.
 
-        const archiveStatusMsg = document.createElement('p');
-        archiveStatusMsg.className = 'chat-status-message'; 
-        archiveStatusMsg.textContent = 'Has archivado esta conversación. El otro usuario ha sido notificado y no podrá responder hasta que se reactive el chat.';
-        archiveStatusMsg.style.textAlign = 'center';
-        archiveStatusMsg.style.fontStyle = 'italic';
-        archiveStatusMsg.style.color = '#9ca3af'; 
-        archiveStatusMsg.style.padding = '10px';
-        chatMessagesEl.appendChild(archiveStatusMsg);
-      },
+      async confirmDeleteSharedChat(partnerIdWhoInitiatedHide) {
+        if (!partnerIdWhoInitiatedHide) return;
+  
+        // Optional: Client-side confirmation dialog
+        // if (!confirm('¿Estás seguro de que quieres eliminar este chat permanentemente? Esta acción no se puede deshacer.')) {
+        //   return;
+        // }
+  
+        try {
+          utils.showUpdateIndicator();
+          const response = await utils.apiCall(`/mensajes/conversacion/${partnerIdWhoInitiatedHide}/confirm-delete`, {
+            method: 'POST',
+          });
+          
+          utils.showMessage(response.message || 'Chat eliminado permanentemente.', 'success');
+          
+          await this.loadConversations(); // Refresh conversation list
+          
+          if (app.currentChatPartnerId === partnerIdWhoInitiatedHide) {
+              chatPanelEl.style.display = 'none'; 
+              app.currentChatPartnerId = null;
+              app.currentChatPartnerName = null;
+              chat.stopPollingMessages();
 
-      displayArchivedByOtherUserMessageAndActions() {
-        if (!chatMessagesEl) return;
-        const existingBar = chatMessagesEl.querySelector('.archival-actions-bar');
-        if (existingBar) existingBar.remove(); // Remove old one first
-
-        const partnerName = app.currentChatPartnerName || 'El otro usuario';
-        const bar = document.createElement('div');
-        bar.className = 'archival-actions-bar';
-        bar.style.textAlign = 'center';
-        bar.style.padding = '10px';
-        bar.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-        bar.style.marginTop = '10px';
-
-        bar.innerHTML = `
-          <p style="color:#9ca3af; font-style:italic; margin-bottom:10px;">${partnerName} ha archivado esta conversación.</p>
-          <button id="acknowledgeArchiveBtn" class="btn btn-sm" style="margin-right: 5px; background: linear-gradient(135deg, #6c757d, #5a6268);">Quitar de mi lista</button>
-          <button id="requestReopenBtn" class="btn btn-sm" style="background: linear-gradient(135deg, #17a2b8, #138496);">Solicitar Reactivar Chat</button>
-        `;
-        chatMessagesEl.appendChild(bar);
-
-        // Attach event listeners
-        const ackBtn = bar.querySelector('#acknowledgeArchiveBtn');
-        if(ackBtn) ackBtn.onclick = () => this.acknowledgeArchive();
-        
-        const reopenBtn = bar.querySelector('#requestReopenBtn');
-        if(reopenBtn) reopenBtn.onclick = () => this.requestReopenChat();
-      },
-
-      async acknowledgeArchive() {
-        // This would typically involve removing the conversation from the user's list or marking it as "seen-archived"
-        utils.showMessage('Funcionalidad "Quitar de mi lista" pendiente de implementación.', 'info');
-        // Potentially:
-        // Call an API to mark this as acknowledged for the current user
-        // Then, app.currentChatArchivalStatus.acknowledgedByMe = true; (or similar)
-        // Then, chat.loadConversations(); and maybe hide the chat panel if no other chat is selected.
-      },
-
-      async requestReopenChat() {
-        // This would involve sending a new message or a special request to the other user
-        utils.showMessage('Funcionalidad "Solicitar Reactivar Chat" pendiente de implementación.', 'info');
-        // Potentially:
-        // Call an API that sends a special "unarchive_request" message or changes ChatPrivilegio state
-        // Update UI to show "Request sent" or similar
+              if (chatPlaceholderEl && chatPanelEl) {
+                  chatPanelEl.style.display = 'block';
+                  chatMessagesEl.innerHTML = '';
+                  if (chatUserNameEl) chatUserNameEl.textContent = 'Usuario';
+                  chatPlaceholderEl.style.display = 'block';
+                  chatPlaceholderEl.innerHTML = 'Selecciona una conversación de la lista para empezar a chatear.';
+                  const inputArea = document.querySelector('.chat-input-area');
+                  if (inputArea) inputArea.style.display = 'none';
+                  history.pushState(null, '', 'mensajes.html');
+              }
+          }
+        } catch (error) {
+          console.error('Error al confirmar la eliminación del chat:', error);
+          // utils.showMessage is likely called by apiCall for generic errors
+        }
       }
+      // chat.requestReactivation, chat.acceptReactivation, chat.rejectReactivation are REMOVED
    };
+
+   // async function cargarSolicitudesReactivacion() { ... } is REMOVED
 
    // Refined init() function for mensajes.html
    async function init() {
@@ -921,10 +941,7 @@
      cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
      updateIndicator = document.getElementById('updateIndicator');
 
-     // Archive modal elements
-     archiveChatModal = document.getElementById('archiveChatModal');
-     confirmArchiveBtn = document.getElementById('confirmArchiveBtn');
-     cancelArchiveBtn = document.getElementById('cancelArchiveBtn');
+     // Archive modal related DOM element lookups are removed.
 
      listaConversacionesEl = document.getElementById('listaConversaciones');
      chatPanelEl = document.getElementById('chatPanel');
@@ -933,11 +950,13 @@
      chatMessageInputEl = document.getElementById('chatMessageInput');
      sendChatMessageBtnEl = document.getElementById('sendChatMessageBtn');
      chatPlaceholderEl = document.getElementById('chatPlaceholder');
-     listaSolicitudesMensajesEl = document.getElementById('listaSolicitudesMensajes'); // Initialize new element
+     listaSolicitudesMensajesEl = document.getElementById('listaSolicitudesMensajes');
+     // listaSolicitudesReactivacionEl related lines are fully removed.
 
      if (!(await auth.checkSession())) return; 
      
-     await cargarSolicitudesMensajes(); // Load message requests
+     await cargarSolicitudesMensajes(); 
+     // await cargarSolicitudesReactivacion(); // Fully removed call.
 
      if(homeBtnEl) homeBtnEl.onclick = () => window.location.href = 'home.html';
      if(profileBtnEl && app.user) profileBtnEl.onclick = () => window.location.href = `perfil.html?id=${app.user._id}`;
@@ -947,52 +966,26 @@
      if(confirmLogoutBtn) confirmLogoutBtn.onclick = () => { auth.logout(); if(logoutModal) logoutModal.style.display = 'none'; };
      if(cancelLogoutBtn) cancelLogoutBtn.onclick = () => { if(logoutModal) logoutModal.style.display = 'none'; };
 
-     // Event listener for dynamically added archive buttons
+     // Event listener for dynamically added hide buttons (formerly archive buttons)
      if (listaConversacionesEl) {
         listaConversacionesEl.addEventListener('click', function(event) {
-            const archiveButton = event.target.closest('.archive-chat-btn');
-            if (archiveButton) {
-                event.stopPropagation(); // Prevent chat from opening due to parent div's onclick
-                const partnerId = archiveButton.dataset.userId;
-                app.archivingChatPartnerId = partnerId;
-                
-                // Optional: Customize modal message with partnerName
-                // const listItem = archiveButton.closest('li');
-                // const partnerName = listItem ? listItem.dataset.userName : 'this user'; 
-                // const modalTextElement = archiveChatModal.querySelector('p');
-                // if (modalTextElement && partnerName) {
-                //    modalTextElement.textContent = `Are you sure you want to archive this chat with ${partnerName}? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.`;
-                // } else if (modalTextElement) {
-                //    modalTextElement.textContent = `Are you sure you want to archive this chat? The other user will be notified and won't be able to reply until they send a new message request, or you send a new message.`; // Default
-                // }
-
-                if (archiveChatModal) {
-                    archiveChatModal.style.display = 'block';
+            const hideButton = event.target.closest('.archive-chat-btn'); // Still using .archive-chat-btn class
+            if (hideButton) {
+                event.stopPropagation(); 
+                const partnerId = hideButton.dataset.userId;
+                if (partnerId) {
+                    // Optional: Add a confirm dialog if immediate hide is too abrupt
+                    // if (confirm('¿Seguro que quieres ocultar esta conversación?')) {
+                    //    chat.hideConversation(partnerId);
+                    // }
+                    // For now, implementing as immediate hide:
+                    chat.hideConversation(partnerId);
                 }
             }
-            // Note: Opening chat is handled by onclick attribute on the div inside li,
-            // so no explicit 'else' block is needed here for that specific action.
         });
      }
 
-     // Event listener for "Confirm Archive" button
-     if (confirmArchiveBtn) {
-        confirmArchiveBtn.onclick = function() {
-            if (app.archivingChatPartnerId) {
-                chat.archiveConversation(app.archivingChatPartnerId); // Call the actual archive function
-            }
-            if (archiveChatModal) archiveChatModal.style.display = 'none';
-            app.archivingChatPartnerId = null; // Reset after action
-        };
-     }
-
-     // Event listener for "Cancel Archive" button
-     if (cancelArchiveBtn) {
-        cancelArchiveBtn.onclick = function() {
-            if (archiveChatModal) archiveChatModal.style.display = 'none';
-            app.archivingChatPartnerId = null;
-        };
-     }
+     // Event listeners for archive modal buttons are removed
 
      if (sendChatMessageBtnEl) {
        sendChatMessageBtnEl.onclick = () => chat.sendMessage();
@@ -1053,10 +1046,7 @@
       if (event.target == logoutModal) {
         logoutModal.style.display = "none";
       }
-      if (event.target == archiveChatModal) { // Added for archive modal
-        archiveChatModal.style.display = "none";
-        app.archivingChatPartnerId = null; // Reset when closing via outside click
-      }
+      // window.onclick no longer needs to handle archiveChatModal
     }
 
     init();

@@ -48,6 +48,97 @@ router.post('/', async (req, res) => {
   }
 });
 
+// POST /usuarios/:userId/follow - Follow a user
+router.post('/:userId/follow', async (req, res) => {
+  if (!req.session.usuario || !req.session.usuario._id) {
+    return res.status(401).json({ error: 'No autenticado. Inicia sesión para seguir a otros usuarios.' });
+  }
+  try {
+    const currentUserId = req.session.usuario._id;
+    const userIdToFollow = req.params.userId;
+
+    if (currentUserId === userIdToFollow) {
+      return res.status(400).json({ error: 'No puedes seguirte a ti mismo.' });
+    }
+
+    const currentUser = await Usuario.findByIdAndUpdate(
+      currentUserId,
+      { $addToSet: { seguidos: userIdToFollow } },
+      { new: true }
+    );
+
+    const userToFollow = await Usuario.findByIdAndUpdate(
+      userIdToFollow,
+      { $addToSet: { seguidores: currentUserId } },
+      { new: true }
+    );
+
+    if (!currentUser || !userToFollow) {
+      return res.status(404).json({ error: 'Uno o ambos usuarios no fueron encontrados.' });
+    }
+
+    res.status(200).json({ 
+      message: 'Ahora sigues a este usuario.', 
+      seguidos: currentUser.seguidos,
+    });
+
+  } catch (error) {
+    console.error('Error al seguir usuario:', error);
+    if (error.name === 'CastError') {
+        return res.status(400).json({ error: 'ID de usuario inválido.' });
+    }
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
+// POST /usuarios/:userId/unfollow - Unfollow a user
+router.post('/:userId/unfollow', async (req, res) => {
+  if (!req.session.usuario || !req.session.usuario._id) {
+    return res.status(401).json({ error: 'No autenticado. Inicia sesión para dejar de seguir a otros usuarios.' });
+  }
+  try {
+    const currentUserId = req.session.usuario._id;
+    const userIdToUnfollow = req.params.userId;
+
+    if (currentUserId === userIdToUnfollow) {
+      return res.status(400).json({ error: 'No puedes dejar de seguirte a ti mismo.' });
+    }
+
+    const currentUser = await Usuario.findByIdAndUpdate(
+      currentUserId,
+      { $pull: { seguidos: userIdToUnfollow } },
+      { new: true }
+    );
+
+    const userToUnfollow = await Usuario.findByIdAndUpdate(
+      userIdToUnfollow,
+      { $pull: { seguidores: currentUserId } },
+      { new: true }
+    );
+
+    // Check if users were found by trying to fetch them again if the update didn't return them
+    // (e.g. if $pull didn't modify anything because the ID wasn't there)
+    const finalCurrentUser = currentUser || await Usuario.findById(currentUserId);
+    const finalUserToUnfollow = userToUnfollow || await Usuario.findById(userIdToUnfollow);
+
+    if (!finalCurrentUser || !finalUserToUnfollow) {
+         return res.status(404).json({ error: 'Uno o ambos usuarios no fueron encontrados para la operación de dejar de seguir.' });
+    }
+
+    res.status(200).json({ 
+        message: 'Has dejado de seguir a este usuario.',
+        seguidos: finalCurrentUser.seguidos 
+    });
+
+  } catch (error) {
+    console.error('Error al dejar de seguir usuario:', error);
+    if (error.name === 'CastError') {
+        return res.status(400).json({ error: 'ID de usuario inválido.' });
+    }
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.usuario && req.session.usuario._id) {
@@ -141,11 +232,42 @@ router.post('/login', async (req, res) => {
 });
 
 // Verificar sesión activa
-router.get('/session', (req, res) => {
-  if (req.session.usuario) {
-    res.json(req.session.usuario);
+router.get('/session', async (req, res) => { // Make it async
+  if (req.session.usuario && req.session.usuario._id) {
+    try {
+      // Fetch the user from DB to get all fields including 'seguidos' and 'seguidores'
+      const usuarioFromDB = await Usuario.findById(req.session.usuario._id)
+        .select('-contrasena'); // Exclude password
+
+      if (!usuarioFromDB) {
+        // This case is unlikely if session exists but user is gone from DB
+        req.session.destroy(); // Clear invalid session
+        return res.status(401).json({ error: 'Sesión inválida o usuario no encontrado.' });
+      }
+
+      // Construct the session user object with all necessary fields
+      const sessionUser = {
+          _id: usuarioFromDB._id,
+          nombre: usuarioFromDB.nombre,
+          tipoCuenta: usuarioFromDB.tipoCuenta,
+          biografia: usuarioFromDB.biografia, 
+          fechaRegistro: usuarioFromDB.fechaRegistro,
+          seguidores: usuarioFromDB.seguidores, // Array of ObjectIds
+          seguidos: usuarioFromDB.seguidos     // Array of ObjectIds
+      };
+
+      // Update the session object itself
+      req.session.usuario = sessionUser; 
+
+      res.json(sessionUser); // Send the more complete user object
+    } catch (error) {
+      console.error("Error al obtener datos de sesión con seguidos/seguidores:", error);
+      // If DB lookup fails, could send basic session info or an error.
+      // Sending an error is safer to indicate data might be stale/incomplete.
+      res.status(500).json({ error: 'Error al obtener datos completos de sesión.'});
+    }
   } else {
-    res.status(401).json({ mensaje: 'No hay sesión activa' });
+    res.status(401).json({ error: 'No hay sesión activa' }); // Changed message key to 'error' for consistency
   }
 });
 
@@ -355,6 +477,52 @@ router.put('/:id/contrasena', async (req, res) => {
   } catch (error) {
     console.error('Error al cambiar contraseña:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+// GET /usuarios/:userId/seguidores - Fetch list of followers for a user
+router.get('/:userId/seguidores', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const usuario = await Usuario.findById(userId).populate({
+      path: 'seguidores',
+      select: 'nombre _id' // Select only name and ID for the list
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    res.json(usuario.seguidores);
+  } catch (error) {
+    console.error('Error al obtener seguidores:', error);
+    if (error.name === 'CastError') {
+        return res.status(400).json({ error: 'ID de usuario inválido.' });
+    }
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
+// GET /usuarios/:userId/siguiendo - Fetch list of users a user is following
+router.get('/:userId/siguiendo', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const usuario = await Usuario.findById(userId).populate({
+      path: 'seguidos', // Correct field name in the Usuario model
+      select: 'nombre _id' // Select only name and ID
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    res.json(usuario.seguidos);
+  } catch (error) {
+    console.error('Error al obtener usuarios seguidos:', error);
+    if (error.name === 'CastError') {
+        return res.status(400).json({ error: 'ID de usuario inválido.' });
+    }
+    res.status(500).json({ error: 'Error interno del servidor.' });
   }
 });
 

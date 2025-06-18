@@ -79,14 +79,21 @@ router.put('/:id/aprobar', async (req, res) => {
 
     if (privilegio) {
       privilegio.estado = 'activo';
+      privilegio.isHidden = false;
+      privilegio.initiatorOfHide = null;
+      privilegio.statusForOtherUser = 'normal';
+      privilegio.hiddenForUsers = [];
       await privilegio.save();
     } else {
-      // This case should ideally not happen if POST /mensajes correctly creates a ChatPrivilegio.
-      // However, to be robust:
+      // If no privilegio existed, create a new one with all defaults correctly set
       privilegio = new ChatPrivilegio({
         solicitante: solicitud.emisor._id,
         receptor: solicitud.receptor._id,
-        estado: 'activo'
+        estado: 'activo',
+        isHidden: false,
+        initiatorOfHide: null,
+        statusForOtherUser: 'normal',
+        hiddenForUsers: []
       });
       await privilegio.save();
     }
