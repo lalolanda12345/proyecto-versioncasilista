@@ -27,6 +27,7 @@ app.use('/publicaciones', require('./routes/publicaciones'));
 app.use('/comentarios', require('./routes/comentarios'));
 app.use('/mensajes', require('./routes/mensajes'));
 app.use('/solicitudesMensajes', solicitudesMensajesRoutes);
+app.use('/api/solicitudes-seguimiento', require('./routes/solicitudesSeguimiento'));
 
 app.get('/', (req, res) => {
   res.send('🚀 API Red Social con Comentarios');

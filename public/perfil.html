@@ -238,11 +238,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255,255,255,0.2); /* Track color when off (Privada) - similar to form input borders */
-  border: 1px solid rgba(255,255,255,0.3);
+  background-color: rgba(255,255,255,0.1); /* Track color when off (Privada) - similar to form input borders */
+  border: 1px solid rgba(255,255,255,0.2);
   -webkit-transition: .4s;
   transition: .4s;
-  border-radius: 34px; /* Rounded track */
+  border-radius: 16px; /* Rounded track */
 }
 
 .slider:before {
@@ -255,7 +255,7 @@
   background-color: white; /* Knob color */
   -webkit-transition: .4s;
   transition: .4s;
-  border-radius: 50%; /* Rounded knob */
+  border-radius: 12px; /* Rounded knob */
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
@@ -496,6 +496,37 @@ input#tipoCuentaSwitch:checked + .slider:before {
         justify-content: center;
       }
     }
+
+    .settings-columns-wrapper {
+      display: flex;
+      align-items: flex-start; /* Align items to the top of each column */
+      width: 100%;
+      gap: 20px; /* Space between the columns */
+    }
+
+    .settings-column {
+      flex: 1; /* Each column will take up equal available space */
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) { /* Breakpoint for stacking columns */
+      .settings-columns-wrapper {
+        flex-direction: column;
+        gap: 15px; /* Adjust gap for stacked layout */
+      }
+      .settings-column-left {
+        margin-bottom: 15px; /* Add space below the privacy column when stacked */
+      }
+      .settings-column-right {
+        margin-bottom: 0; /* Ensure no extra margin for the last item */
+      }
+    }
+
+    @media (min-width: 769px) { /* Screen wider than 768px */
+        .settings-column-left {
+            margin-bottom: 0px; /* Remove space below the privacy column when side by side */
+        }
+    }
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -508,6 +539,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
   <div class="perfil-card">
     <div class="perfil-header">
       <h3 id="nombrePerfil">Nombre</h3>
+      <button id="btnConfiguracion" class="btn-edit" style="margin-top: 10px; display: none;">⚙️ Configuración</button>
       
       <!-- Biografía -->
       <div class="editar-container">
@@ -520,11 +552,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
             <button id="btnCancelarBiografia" class="btn btn-secondary">❌ Cancelar</button>
           </div>
         </div>
-        <div class="edit-buttons">
-          <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
-          <button id="btnEditarNombre" class="btn-edit" style="display: none;">👤 Editar nombre</button>
-          <button id="btnEditarContrasena" class="btn-edit" style="display: none;">🔒 Cambiar contraseña</button>
-        </div>
+        <!-- The .edit-buttons div will be moved -->
       </div>
 
       <!-- Editar Nombre -->
@@ -549,6 +577,36 @@ input#tipoCuentaSwitch:checked + .slider:before {
     </div>
 
     <div class="perfil-content">
+      <div id="configuracionSection" style="display: none; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
+        <div class="settings-columns-wrapper">
+            <div class="settings-column settings-column-left">
+                <div class="profile-setting" id="accountPrivacySection" style="margin-top: 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: none;">
+                    <h4 style="font-weight: 600; font-size: 18px; color: #FFFFFF; margin-bottom: 15px;">Configuración de Privacidad de la Cuenta</h4>
+                    
+                    <div class="switch-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 15px;">
+                      <span style="color: rgba(255,255,255,0.9);">Cuenta Privada</span>
+                      <label class="switch" style="margin-left: 10px;">
+                        <input type="checkbox" id="tipoCuentaSwitch">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <p style="font-size: 0.8em; color: rgba(255,255,255,0.7); text-align: center; margin-bottom:15px;">
+                      Si es Pública, cualquiera puede enviarte mensajes. Si es Privada, se requieren solicitudes para nuevos chats.
+                    </p>
+        
+                    <button id="guardarTipoCuentaBtn" class="btn btn-primary" style="width:100%;">💾 Guardar Preferencia</button>
+                    <p id="tipoCuentaFeedback" style="font-size: 0.9em; margin-top: 10px; text-align:center;"></p>
+                  </div>
+            </div>
+            <div class="settings-column settings-column-right">
+                <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+                    <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
+                    <button id="btnEditarNombre" class="btn-edit" style="display: none;">👤 Editar nombre</button>
+                    <button id="btnEditarContrasena" class="btn-edit" style="display: none;">🔒 Cambiar contraseña</button>
+                </div>
+            </div>
+        </div>
+      </div>
       <div class="perfil-datos">
         <p>📅 Registrado desde: <span id="fechaPerfil"></span></p>
         
@@ -559,27 +617,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
         <button id="btnEnviarMensaje" class="btn btn-primary" style="display:none; margin-top: 10px; width:100%;">✉️ Enviar Mensaje</button>
       </div>
 
-      <!-- Account Privacy Settings -->
-      <div class="profile-setting" id="accountPrivacySection" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: none;">
-        <h4 style="font-weight: 600; font-size: 18px; color: #FFFFFF; margin-bottom: 15px;">Configuración de Privacidad de la Cuenta</h4>
-        
-        <!-- New Switch HTML -->
-        <div class="switch-container" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-          <span style="color: rgba(255,255,255,0.9);">Cuenta Privada</span>
-          <label class="switch">
-            <input type="checkbox" id="tipoCuentaSwitch">
-            <span class="slider round"></span>
-          </label>
-          <span style="color: rgba(255,255,255,0.9);">Cuenta Pública</span>
-        </div>
-        <p style="font-size: 0.8em; color: rgba(255,255,255,0.7); text-align: center; margin-bottom:15px;">
-          Si es Pública, cualquiera puede enviarte mensajes. Si es Privada, se requieren solicitudes para nuevos chats.
-        </p>
-        <!-- End New Switch HTML -->
-
-        <button id="guardarTipoCuentaBtn" class="btn btn-primary" style="width:100%;">💾 Guardar Preferencia</button>
-        <p id="tipoCuentaFeedback" style="font-size: 0.9em; margin-top: 10px; text-align:center;"></p>
-      </div>
+      <!-- Account Privacy Settings has been moved into configuracionSection -->
 
     </div>
   </div>
@@ -604,6 +642,8 @@ input#tipoCuentaSwitch:checked + .slider:before {
     const btnEditarBiografia = document.getElementById('btnEditarBiografia');
     const btnEditarNombre = document.getElementById('btnEditarNombre');
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
+    const btnConfiguracion = document.getElementById('btnConfiguracion');
+    const configuracionSection = document.getElementById('configuracionSection');
 
     // DOM Elements for Account Type
     let tipoCuentaSwitchEl; // Renamed from tipoCuentaSelectEl
@@ -617,6 +657,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
     btnEditarBiografia.addEventListener('click', () => habilitarEdicion('biografia'));
     btnEditarNombre.addEventListener('click', () => habilitarEdicion('nombre'));
     btnEditarContrasena.addEventListener('click', () => habilitarEdicion('contrasena'));
+    if (btnConfiguracion) btnConfiguracion.addEventListener('click', toggleConfiguracion);
     
     document.getElementById('btnGuardarBiografia').addEventListener('click', () => guardar('biografia'));
     document.getElementById('btnGuardarNombre').addEventListener('click', () => guardar('nombre'));
@@ -638,6 +679,14 @@ input#tipoCuentaSwitch:checked + .slider:before {
       nombreEdit.style.display = 'none';
       contrasenaEdit.style.display = 'none';
       
+      // Ensure configuracionSection is open if not already
+      if (configuracionSection && configuracionSection.style.display === 'none') {
+        // This will open the section and also call showEditButtons, 
+        // but we are about to hide them again for the form.
+        toggleConfiguracion(); 
+      }
+      
+      // Explicitly hide main edit buttons as a specific form is opening.
       btnEditarBiografia.style.display = 'none';
       btnEditarNombre.style.display = 'none';
       btnEditarContrasena.style.display = 'none';
@@ -670,10 +719,44 @@ input#tipoCuentaSwitch:checked + .slider:before {
       } else if (tipo === 'contrasena') {
         contrasenaEdit.style.display = 'none';
       }
-      
-      btnEditarBiografia.style.display = 'inline-block';
-      btnEditarNombre.style.display = 'inline-block';
-      btnEditarContrasena.style.display = 'inline-block';
+      showEditButtons(); // Ensure edit buttons are visible if config section is open
+    }
+
+    function toggleConfiguracion() {
+      if (!configuracionSection) return;
+      const isVisible = configuracionSection.style.display === 'block';
+      configuracionSection.style.display = isVisible ? 'none' : 'block';
+
+      if (isVisible) { // If section is being hidden
+        biografiaEdit.style.display = 'none';
+        nombreEdit.style.display = 'none';
+        contrasenaEdit.style.display = 'none';
+        if (biografiaDisplay.style.display === 'none' && !biografiaEdit.style.display === 'block') {
+            biografiaDisplay.style.display = 'block'; // Restore biografia display
+        }
+        if (accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none';
+      } else { // If section is being shown
+        showEditButtons();
+        if (esPerfilPropio && accountPrivacySectionEl) {
+          accountPrivacySectionEl.style.display = 'block';
+        }
+      }
+    }
+
+    function showEditButtons() {
+      const formActivo = biografiaEdit.style.display === 'block' ||
+                         nombreEdit.style.display === 'block' ||
+                         contrasenaEdit.style.display === 'block';
+
+      if (esPerfilPropio && configuracionSection && configuracionSection.style.display === 'block' && !formActivo) {
+        btnEditarBiografia.style.display = 'inline-block';
+        btnEditarNombre.style.display = 'inline-block';
+        btnEditarContrasena.style.display = 'inline-block';
+      } else {
+        btnEditarBiografia.style.display = 'none';
+        btnEditarNombre.style.display = 'none';
+        btnEditarContrasena.style.display = 'none';
+      }
     }
 
     async function guardar(tipo) {
@@ -784,28 +867,80 @@ input#tipoCuentaSwitch:checked + .slider:before {
 
         if (usuarioActual && usuarioActual._id === id) { // Check if logged-in user is viewing their own profile
           esPerfilPropio = true;
-          btnEditarBiografia.style.display = 'inline-block';
-          btnEditarNombre.style.display = 'inline-block';
-          btnEditarContrasena.style.display = 'inline-block';
+          if(btnConfiguracion) btnConfiguracion.style.display = 'inline-block'; // Show settings button
+          // Edit buttons are now inside configuracionSection, shown/hidden by toggleConfiguracion & showEditButtons
           
-          // Show and setup account privacy settings only for own profile
-          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'block';
+          // Setup account privacy settings. Visibility is handled by toggleConfiguracion
           if(guardarTipoCuentaBtnEl) guardarTipoCuentaBtnEl.onclick = guardarTipoCuenta;
-          cargarPreferenciasUsuario(); // Load current preference into select
+          cargarPreferenciasUsuario(); 
+          // Ensure edit buttons are hidden initially if config section is hidden
+          showEditButtons(); 
+          // Ensure privacy section is hidden initially if config section is hidden
+          if (configuracionSection && configuracionSection.style.display !== 'block' && accountPrivacySectionEl) {
+            accountPrivacySectionEl.style.display = 'none';
+          }
+
 
         } else { // Viewing another user's profile
           esPerfilPropio = false;
-          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none'; // Hide privacy settings
-          const sigue = usuario.seguidores.some(seg => seg._id === usuarioActual._id);
-          const btn = document.getElementById('btnSeguir');
-          if (btn) { // Ensure button exists before manipulating
-            btn.style.display = 'inline-block';
-            btn.textContent = sigue ? 'Dejar de seguir' : 'Seguir';
-            btn.classList.toggle('dejar', sigue);
-            btn.onclick = async () => {
-              const resSeguir = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
-              if (resSeguir.ok) cargarPerfil(); 
-            };
+          if(btnConfiguracion) btnConfiguracion.style.display = 'none'; // Hide settings button
+          if(configuracionSection) configuracionSection.style.display = 'none'; // Ensure settings section is hidden
+          if(accountPrivacySectionEl) accountPrivacySectionEl.style.display = 'none'; // Ensure privacy settings are hidden
+          
+          const btnSeguir = document.getElementById('btnSeguir');
+          if (btnSeguir) {
+              btnSeguir.style.display = 'inline-block';
+              btnSeguir.disabled = false; // Reset disabled state
+
+              const yaSigue = usuario.seguidores.some(seg => seg._id === usuarioActual._id);
+
+              if (yaSigue) {
+                  btnSeguir.textContent = 'Dejar de seguir';
+                  btnSeguir.classList.add('dejar');
+                  btnSeguir.onclick = async () => {
+                      const resUnfollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+                      if (resUnfollow.ok) cargarPerfil(); // Reload profile to update state
+                  };
+              } else {
+                  // Not yet following
+                  if (usuario.tipoCuenta === 'privada') {
+                      btnSeguir.textContent = 'Solicitar seguimiento';
+                      btnSeguir.classList.remove('dejar'); // Ensure it's not styled as 'dejar' initially
+                      btnSeguir.onclick = async () => {
+                          try {
+                              const resSolicitud = await fetch(`/api/solicitudes-seguimiento/${id}`, { 
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' }
+                              });
+                              const resultado = await resSolicitud.json();
+
+                              if (resSolicitud.ok) {
+                                  showNotification(resultado.mensaje || 'Solicitud enviada.', 'success');
+                                  btnSeguir.textContent = 'Solicitud enviada';
+                                  btnSeguir.disabled = true;
+                                  btnSeguir.classList.add('dejar'); // Use 'dejar' style for pending
+                              } else {
+                                  showNotification(resultado.mensaje || 'No se pudo enviar la solicitud.', 'error');
+                                  if (resultado.mensaje && resultado.mensaje.toLowerCase().includes('pendiente')) {
+                                       btnSeguir.textContent = 'Solicitud enviada';
+                                       btnSeguir.disabled = true;
+                                       btnSeguir.classList.add('dejar');
+                                  }
+                              }
+                          } catch (err) {
+                              console.error("Error sending follow request:", err);
+                              showNotification('Error al conectar con el servidor.', 'error');
+                          }
+                      };
+                  } else { // Public account or tipoCuenta not defined
+                      btnSeguir.textContent = 'Seguir';
+                      btnSeguir.classList.remove('dejar');
+                      btnSeguir.onclick = async () => {
+                          const resFollow = await fetch(`/usuarios/${id}/seguir`, { method: 'POST' });
+                          if (resFollow.ok) cargarPerfil(); // Reload profile to update state
+                      };
+                  }
+              }
           }
         }
 
