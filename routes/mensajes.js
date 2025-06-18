@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
     // Proceed with ChatPrivilegio and SolicitudMensaje logic for all users.
 
-    // Check for an active ChatPrivilegio
+    // Check for ChatPrivilegio (active or otherwise)
     let privilegio = await ChatPrivilegio.findOne({
       $or: [
         { solicitante: emisorId, receptor: receptorId },
@@ -33,8 +33,45 @@ router.post('/', async (req, res) => {
       ]
     });
 
+    // Handle archived chat scenarios first
+    if (privilegio && privilegio.isArchived) {
+      if (privilegio.archivedBy && privilegio.archivedBy.toString() === receptorId.toString()) {
+        // Message recipient archived the chat. Sender cannot send.
+        return res.status(403).json({ 
+          error: 'El otro usuario ha archivado esta conversación. No puedes enviar mensajes.', 
+          type: 'archived_by_receptor',
+          code: 'CHAT_ARCHIVED_BY_RECEPTOR'
+        });
+      } else if (privilegio.archivedBy && privilegio.archivedBy.toString() === emisorId.toString()) {
+        // Sender archived the chat. Sending a message unarchives it.
+        privilegio.isArchived = false;
+        privilegio.archivedBy = null;
+
+        // Ensure the privilege state is 'activo' and solicitante/receptor are correctly set for an active chat
+        // If emisorId was originally the 'receptor' in the privilegio doc, and receptorId was 'solicitante',
+        // we might need to flip them if our system defines 'solicitante' as the one who initiates an active phase.
+        // For simplicity, if unarchiving by sending a message, we set the sender as solicitante.
+        // This might need more nuanced handling if strict roles are maintained beyond 'pendiente'.
+        if (privilegio.receptor.toString() === emisorId.toString()) {
+            // The sender was the original receptor of a request. Flip them to be solicitante.
+            // This case is less common if 'activo' usually means the original solicitante got their request approved.
+            // However, to be robust for unarchiving:
+            privilegio.solicitante = emisorId;
+            privilegio.receptor = receptorId;
+        }
+        privilegio.estado = 'activo'; // Sending a message makes the chat active.
+        await privilegio.save();
+        // Now, 'privilegio' is unarchived and active. The code will flow into the next block.
+      }
+      // If isArchived is true but archivedBy is null (e.g. system archived, or old data),
+      // allow message sending to proceed, which effectively unarchives it and assigns active state.
+      // This case will fall through to the 'privilegio.estado === 'activo'' check or the 'else' for request creation.
+      // If it was system-archived and state wasn't 'activo', it would then create a new request or message.
+      // For now, we assume `archivedBy` is set if `isArchived` is true.
+    }
+
     if (privilegio && privilegio.estado === 'activo') {
-      // Active privilege exists, send message directly
+      // Active (or just became active) privilege exists, send message directly
       const nuevoMensaje = new Mensaje({
         emisor: emisorId,
         receptor: receptorId,
@@ -117,6 +154,62 @@ router.post('/', async (req, res) => {
   }
 });
 
+// POST /mensajes/conversacion/:partnerUserId/archive - Archive a conversation
+router.post('/conversacion/:partnerUserId/archive', async (req, res) => {
+  if (!req.session.usuario || !req.session.usuario._id) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+
+  const userId = req.session.usuario._id;
+  const { partnerUserId } = req.params;
+
+  if (userId === partnerUserId) {
+    return res.status(400).json({ error: 'Cannot archive a chat with yourself.' });
+  }
+
+  try {
+    let privilegio = await ChatPrivilegio.findOne({
+      $or: [
+        { solicitante: userId, receptor: partnerUserId },
+        { solicitante: partnerUserId, receptor: userId }
+      ]
+    });
+
+    if (!privilegio) {
+      return res.status(404).json({ error: 'Chat privilege record not found.' });
+    }
+
+    // Optional: Check if the chat is active before archiving
+    // For now, only active chats can be archived. This could be expanded later.
+    if (privilegio.estado !== 'activo') {
+      return res.status(400).json({ error: 'Only active chats can be archived at the moment.' });
+    }
+
+    // Check if already archived by the same user
+    if (privilegio.isArchived && privilegio.archivedBy && privilegio.archivedBy.toString() === userId.toString()) {
+      // If already archived by this user, we can just return success or a specific message.
+      // Re-saving doesn't hurt due to pre-save hook updating fechaActualizacion.
+      return res.status(200).json({ message: 'Chat already archived by you.' });
+    }
+
+    privilegio.isArchived = true;
+    privilegio.archivedBy = userId;
+    // The pre-save hook on ChatPrivilegioSchema handles fechaActualizacion,
+    // so no need to explicitly set `privilegio.fechaActualizacion = Date.now();` here.
+
+    await privilegio.save();
+
+    // TODO: Future enhancement - send a notification to the partnerUser that the chat was archived.
+    // This would likely involve a separate notification system or a special type of message.
+
+    res.status(200).json({ message: 'Chat archived successfully.' });
+
+  } catch (error) {
+    console.error('Error archiving chat:', error);
+    res.status(500).json({ error: 'Error interno del servidor al archivar el chat.' });
+  }
+});
+
 // GET /mensajes/conversacion/:usuarioId1/:usuarioId2 - Fetch message history between two users
 router.get('/conversacion/:usuarioId1/:usuarioId2', async (req, res) => {
   try {
@@ -132,7 +225,36 @@ router.get('/conversacion/:usuarioId1/:usuarioId2', async (req, res) => {
     .populate('receptor', 'nombre')
     .sort({ fechaEnvio: 1 }); // Sort by date ascending
 
-    res.json(mensajes);
+    // Attempt to get current user ID from session for 'archivedByMe'
+    const currentUserActualId = req.session.usuario ? req.session.usuario._id : null;
+
+    const privilegio = await ChatPrivilegio.findOne({
+      $or: [
+        { solicitante: usuarioId1, receptor: usuarioId2 },
+        { solicitante: usuarioId2, receptor: usuarioId1 }
+      ]
+    });
+
+    let archivalStatus = {
+      isArchived: false,
+      archivedBy: null,
+      archivedByMe: false,
+      chatPrivilegioEstado: 'none' // Default state if no privilegio found
+    };
+
+    if (privilegio) {
+      archivalStatus.isArchived = privilegio.isArchived || false;
+      archivalStatus.archivedBy = privilegio.archivedBy || null;
+      if (currentUserActualId && privilegio.isArchived && privilegio.archivedBy) {
+        archivalStatus.archivedByMe = privilegio.archivedBy.toString() === currentUserActualId.toString();
+      }
+      archivalStatus.chatPrivilegioEstado = privilegio.estado || 'none';
+    }
+
+    res.json({
+      messages: mensajes,
+      archivalStatus: archivalStatus
+    });
   } catch (error) {
     console.error('Error al obtener conversación:', error);
     res.status(500).json({ error: 'Error interno del servidor al obtener la conversación.' });
@@ -172,9 +294,37 @@ router.get('/conversaciones', async (req, res) => {
     });
 
     // Convert conversations object to an array
-    const listaConversaciones = Object.values(conversaciones).sort((a,b) => b.fechaEnvio - a.fechaEnvio);
+    let listaConversaciones = Object.values(conversaciones).sort((a,b) => b.fechaEnvio - a.fechaEnvio);
 
-    res.json(listaConversaciones);
+    // Augment conversations with ChatPrivilegio data
+    const augmentedListaConversaciones = [];
+    for (const conv of listaConversaciones) {
+      const otroUsuarioId = conv.otroUsuario._id;
+      const privilegio = await ChatPrivilegio.findOne({
+        $or: [
+          { solicitante: usuarioActualId, receptor: otroUsuarioId },
+          { solicitante: otroUsuarioId, receptor: usuarioActualId }
+        ]
+      });
+
+      const augmentedConv = { ...conv }; // Clone the conversation object
+
+      if (privilegio) {
+        augmentedConv.isArchived = privilegio.isArchived || false; // Default to false if undefined
+        augmentedConv.archivedBy = privilegio.archivedBy || null;
+        augmentedConv.archivedByMe = !!(privilegio.isArchived && privilegio.archivedBy && privilegio.archivedBy.toString() === usuarioActualId.toString());
+        augmentedConv.chatPrivilegioEstado = privilegio.estado || 'none';
+      } else {
+        // Default values if no privilegio record is found (should be rare for active conversations)
+        augmentedConv.isArchived = false;
+        augmentedConv.archivedBy = null;
+        augmentedConv.archivedByMe = false;
+        augmentedConv.chatPrivilegioEstado = 'none'; // Or 'desconocido', 'no_establecido'
+      }
+      augmentedListaConversaciones.push(augmentedConv);
+    }
+
+    res.json(augmentedListaConversaciones);
   } catch (error) {
     console.error('Error al obtener conversaciones:', error);
     res.status(500).json({ error: 'Error interno del servidor al obtener las conversaciones.' });
