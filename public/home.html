@@ -727,10 +727,20 @@
   <div class="header">
     <h2>Flick</h2>
     <div class="header-actions">
+      <button id="inboxTriggerBtn" class="logout-btn icon-btn" aria-label="Follow Requests">🔔</button>
       <button id="messagesBtn" class="messages-btn">Mensajes</button>
       <button id="profileBtn" class="profile-btn">Mi Perfil</button>
       <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
     </div>
+  </div>
+
+  <div id="followRequestsInbox" class="inbox-panel" style="display: none;">
+      <h4>Solicitudes de Seguimiento</h4>
+      <div id="inboxRequestsList">
+          <!-- Requests will be populated here -->
+          <p class="no-requests-message" style="display: none;">No tienes solicitudes pendientes.</p>
+      </div>
+      <a href="solicitudes.html" class="view-all-link">Ver todas</a>
   </div>
 
   <div class="content">
@@ -766,6 +776,11 @@
 
   <script>
     // Estado global simplificado
+    let inboxTriggerBtnEl;
+    let followRequestsInboxEl;
+    let inboxRequestsListEl;
+    let noRequestsMessageEl;
+    
     const app = {
       user: null,
       posts: [],
@@ -821,6 +836,9 @@
           if (response.ok) {
             app.user = await response.json();
             document.getElementById('userName').textContent = app.user.nombre;
+            if (inboxTriggerBtnEl) {
+                inboxTriggerBtnEl.style.display = 'inline-flex'; // Show the button
+            }
             return true;
           }
           this.redirectToLogin();
@@ -871,6 +889,13 @@
         
         // Detener auto-actualización
         autoUpdate.stop();
+        
+        if (document.getElementById('inboxTriggerBtn')) { // Check if element exists before trying to style it
+            document.getElementById('inboxTriggerBtn').style.display = 'none';
+        }
+        if (document.getElementById('followRequestsInbox')) {
+            document.getElementById('followRequestsInbox').style.display = 'none';
+        }
         
         // Limpiar cualquier token o dato de sesión que puedas tener
         // (esto depende de cómo manejes la autenticación)
@@ -1327,6 +1352,150 @@
       }
     };
 
+    function toggleFollowRequestsInbox() {
+        if (!followRequestsInboxEl) return;
+        const isVisible = followRequestsInboxEl.style.display === 'block';
+        followRequestsInboxEl.style.display = isVisible ? 'none' : 'block';
+        // Only fetch if opening and list is empty or only has the no-requests message
+        if (!isVisible && inboxRequestsListEl && (!inboxRequestsListEl.hasChildNodes() || inboxRequestsListEl.children.length === 0 || (inboxRequestsListEl.children.length === 1 && inboxRequestsListEl.firstChild.classList.contains('no-requests-message')))) {
+            cargarSolicitudesInbox();
+        }
+    }
+
+    async function cargarSolicitudesInbox() {
+        if (!inboxRequestsListEl || !noRequestsMessageEl || !app.user) return; // Added app.user check
+        
+        // Clear previous list but preserve the 'no requests' message element if it exists
+        if (noRequestsMessageEl && inboxRequestsListEl.contains(noRequestsMessageEl)) {
+            while (inboxRequestsListEl.firstChild && !inboxRequestsListEl.firstChild.isSameNode(noRequestsMessageEl)) {
+                inboxRequestsListEl.removeChild(inboxRequestsListEl.firstChild);
+            }
+        } else { // If noRequestsMessageEl is not there or not a child, clear all
+            inboxRequestsListEl.innerHTML = '';
+            // Re-create noRequestsMessageEl if it was missing, though it should be in the HTML
+            if (!noRequestsMessageEl) {
+                noRequestsMessageEl = document.createElement('p');
+                noRequestsMessageEl.className = 'no-requests-message';
+                noRequestsMessageEl.style.display = 'none';
+                // inboxRequestsListEl.appendChild(noRequestsMessageEl); // Append later if needed
+            }
+        }
+        noRequestsMessageEl.style.display = 'none'; // Hide it initially
+
+        try {
+            // utils.showUpdateIndicator(); // Optional: show indicator
+            const res = await fetch('/api/solicitudes-seguimiento/recibidas'); // Assumes current user context is handled by server
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.mensaje || 'Error al cargar solicitudes de seguimiento');
+            }
+            const solicitudes = await res.json();
+
+            if (solicitudes.length === 0) {
+                noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
+                // Ensure noRequestsMessageEl is in the list if not already
+                if (!inboxRequestsListEl.contains(noRequestsMessageEl)) {
+                     inboxRequestsListEl.appendChild(noRequestsMessageEl);
+                }
+                noRequestsMessageEl.style.display = 'block';
+                return;
+            }
+
+            solicitudes.forEach(solicitud => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inbox-request-item';
+                itemDiv.id = `inbox-solicitud-${solicitud._id}`;
+
+                const userInfo = document.createElement('span');
+                userInfo.className = 'requester-name';
+                // Ensure solicitante and nombre exist to prevent errors
+                userInfo.textContent = `${solicitud.solicitante && solicitud.solicitante.nombre ? solicitud.solicitante.nombre : 'Usuario desconocido'} quiere seguirte.`;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'actions';
+
+                const btnAceptar = document.createElement('button');
+                btnAceptar.className = 'btn-accept-inbox';
+                btnAceptar.textContent = 'Aceptar';
+                btnAceptar.onclick = () => manejarSolicitudInbox(solicitud._id, 'aceptar');
+
+                const btnRechazar = document.createElement('button');
+                btnRechazar.className = 'btn-decline-inbox';
+                btnRechazar.textContent = 'Rechazar';
+                btnRechazar.onclick = () => manejarSolicitudInbox(solicitud._id, 'rechazar');
+
+                actionsDiv.appendChild(btnAceptar);
+                actionsDiv.appendChild(btnRechazar);
+                itemDiv.appendChild(userInfo);
+                itemDiv.appendChild(actionsDiv);
+                // Insert before the noRequestsMessageEl if it's present, otherwise append
+                if (inboxRequestsListEl.contains(noRequestsMessageEl)) {
+                    inboxRequestsListEl.insertBefore(itemDiv, noRequestsMessageEl);
+                } else {
+                    inboxRequestsListEl.appendChild(itemDiv);
+                }
+            });
+
+        } catch (error) {
+            console.error('Error cargando solicitudes en inbox:', error);
+            noRequestsMessageEl.textContent = 'Error al cargar solicitudes.';
+             if (!inboxRequestsListEl.contains(noRequestsMessageEl)) {
+                     inboxRequestsListEl.appendChild(noRequestsMessageEl);
+             }
+            noRequestsMessageEl.style.display = 'block';
+            // utils.showMessage(error.message, 'error'); // showNotification is used in perfil.html, ensure it's available or use utils.showMessage
+            if (typeof showNotification === 'function') {
+                showNotification(error.message, 'error');
+            } else {
+                utils.showMessage(error.message, 'error');
+            }
+        }
+    }
+
+    async function manejarSolicitudInbox(solicitudId, accion) {
+        if (!app.user) return; // Added app.user check
+        try {
+            const res = await fetch(`/api/solicitudes-seguimiento/${solicitudId}/${accion}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' } // Body not needed as per perfil.js but Content-Type is good practice
+            });
+            const resultado = await res.json();
+
+            if (res.ok) {
+                // utils.showMessage(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
+                 if (typeof showNotification === 'function') {
+                    showNotification(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
+                } else {
+                    utils.showMessage(resultado.mensaje || `Solicitud ${accion === 'aceptar' ? 'aceptada' : 'rechazada'}.`, 'success');
+                }
+
+                const itemToRemove = document.getElementById(`inbox-solicitud-${solicitudId}`);
+                if (itemToRemove) {
+                    itemToRemove.remove();
+                }
+                
+                // Check if list is now empty and show message if so
+                if (inboxRequestsListEl && noRequestsMessageEl && (!inboxRequestsListEl.hasChildNodes() || inboxRequestsListEl.children.length === 0 || (inboxRequestsListEl.children.length === 1 && inboxRequestsListEl.firstChild.classList.contains('no-requests-message')))) {
+                    noRequestsMessageEl.textContent = 'No tienes solicitudes pendientes.';
+                    if (!inboxRequestsListEl.contains(noRequestsMessageEl)) {
+                        inboxRequestsListEl.appendChild(noRequestsMessageEl);
+                    }
+                    noRequestsMessageEl.style.display = 'block';
+                }
+            } else {
+                throw new Error(resultado.mensaje || `Error al ${accion} la solicitud.`);
+            }
+        } catch (error) {
+            console.error(`Error al ${accion} la solicitud desde inbox:`, error);
+            // utils.showMessage(error.message, 'error');
+            if (typeof showNotification === 'function') {
+                showNotification(error.message, 'error');
+            } else {
+                utils.showMessage(error.message, 'error');
+            }
+        }
+    }
+
     // Inicialización
     async function init() {
       // Verificar sesión
@@ -1337,6 +1506,14 @@
       const logoutModal = document.getElementById('logoutModal');
       const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
       const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+      // Assign Notification Inbox Elements
+      inboxTriggerBtnEl = document.getElementById('inboxTriggerBtn');
+      followRequestsInboxEl = document.getElementById('followRequestsInbox');
+      inboxRequestsListEl = document.getElementById('inboxRequestsList'); 
+      if (followRequestsInboxEl) { 
+          noRequestsMessageEl = followRequestsInboxEl.querySelector('.no-requests-message');
+      }
 
       // Event listeners
       document.getElementById('logoutBtn').onclick = () => {
@@ -1354,6 +1531,10 @@
         cancelLogoutBtn.onclick = () => {
           hideLogoutModal(); // Simply hide modal on cancel
         };
+      }
+      
+      if (inboxTriggerBtnEl) {
+          inboxTriggerBtnEl.addEventListener('click', toggleFollowRequestsInbox);
       }
 
       // Botón para ir al perfil propio
