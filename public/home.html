@@ -1216,7 +1216,7 @@
 
         return `
           <div class="post ${isEditing ? 'editing' : ''}" data-id="${post._id}">
-            <div class="post-header" style="display: flex; align-items: center; gap: 10px;">
+            <div class="post-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
               <img src="${post.usuario?.fotoPerfilUrl || '/images/default-avatar.svg'}" alt="Foto de perfil de ${post.usuario?.nombre || 'Usuario'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
               <div>
                 <strong>${post.usuario?.nombre || 'Usuario'}</strong>

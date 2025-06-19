@@ -371,6 +371,7 @@
       currentChatPartnerId: null,
       currentChatPartnerName: null,
       chatPollInterval: null,
+      solicitudesPollInterval: null, // Add this line
       // archivingChatPartnerId: null, // Obsolete
       // currentChatArchivalStatus: null, // Obsolete
     };
@@ -471,6 +472,7 @@
             clearInterval(app.chatPollInterval);
             app.chatPollInterval = null;
        }
+       chat.stopPollingSolicitudes(); // Add this line
        
        try {
          document.cookie.split(";").forEach(cookie => {
@@ -494,10 +496,12 @@
    };
 
    // Functions for Message Requests
-   async function cargarSolicitudesMensajes() {
+   async function cargarSolicitudesMensajes(silent = false) { // Modified signature
     if (!app.user || !listaSolicitudesMensajesEl) return;
     try {
-      utils.showUpdateIndicator();
+      if (!silent) { // Conditional call
+        utils.showUpdateIndicator();
+      }
       const solicitudes = await utils.apiCall('/solicitudesMensajes');
       listaSolicitudesMensajesEl.innerHTML = '';
       if (solicitudes.length === 0) {
@@ -847,6 +851,24 @@
        }
      },
 
+     startPollingSolicitudes() {
+       this.stopPollingSolicitudes(); 
+       if (app.user) { // Only poll if user is logged in
+         app.solicitudesPollInterval = setInterval(() => {
+           if (document.visibilityState === 'visible' && app.user) { // Check visibility and user again inside interval
+               cargarSolicitudesMensajes(true); // Pass true for silent update
+           }
+         }, 15000); // Poll every 15 seconds (adjust as needed)
+       }
+     },
+
+     stopPollingSolicitudes() {
+       if (app.solicitudesPollInterval) {
+         clearInterval(app.solicitudesPollInterval);
+         app.solicitudesPollInterval = null;
+       }
+     },
+
      async hideConversation(partnerUserId) { // Renamed from archiveConversation
         if (!app.user || !partnerUserId) return;
         try {
@@ -1030,16 +1052,23 @@
      document.addEventListener('visibilitychange', () => {
        if (document.hidden) {
          chat.stopPollingMessages();
+         chat.stopPollingSolicitudes(); // Ensure this is present
        } else {
-         if(app.user) { // only if user is logged in
-            chat.loadConversations(); // Refresh conversations list
+         if(app.user) { 
+            chat.loadConversations(); 
             if (app.currentChatPartnerId) { 
-              chat.loadMessages(false); // Force refresh when tab becomes visible
+              chat.loadMessages(false); 
               chat.startPollingMessages();
             }
+            cargarSolicitudesMensajes(false); // Immediate non-silent load for requests
+            chat.startPollingSolicitudes();   // Restart silent polling for requests
+         } else { // If no user session (e.g., session expired and tab refocused)
+            auth.checkSession(); // Optionally re-check session
          }
        }
      });
+
+     chat.startPollingSolicitudes(); 
    }
 
     window.onclick = function(event) {
