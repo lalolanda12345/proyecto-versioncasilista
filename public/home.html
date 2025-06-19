@@ -752,8 +752,26 @@
       <div class="panel">
         <h3>Nueva Publicación</h3>
         <form id="postForm">
-          <textarea id="postContent" rows="4" placeholder="¿Qué estás pensando?" required></textarea>
-          <button type="submit" class="btn">Publicar</button>
+          <textarea id="postContent" rows="4" placeholder="¿Qué estás pensando?"></textarea>
+          
+          <div id="imagePreviewContainer" style="margin-top: 10px; display: none; position: relative; max-width: fit-content;">
+            <img id="imagePreview" src="#" alt="Vista previa de imagen" style="max-width: 100%; max-height: 200px; border-radius: 8px; display: block;"/>
+            <button type="button" id="removeImageBtn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 15px; line-height: 25px; text-align: center; cursor: pointer;">&times;</button>
+          </div>
+
+          <div class="post-actions-container" style="display: flex; align-items: center; margin-top: 10px; gap: 10px;">
+            <label for="postImageGallery" class="btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); cursor: pointer;">
+              🖼️ Galería
+            </label>
+            <input type="file" id="postImageGallery" accept="image/*" style="display: none;">
+            
+            <label for="postImageCamera" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); cursor: pointer;">
+              📸 Cámara
+            </label>
+            <input type="file" id="postImageCamera" accept="image/*" capture="user" style="display: none;">
+            
+            <button type="submit" class="btn">Publicar</button> 
+          </div>
         </form>
       </div>
 
@@ -793,16 +811,36 @@
 
       async apiCall(url, options = {}) {
         try {
-          const response = await fetch(url, {
-            headers: { 'Content-Type': 'application/json' },
-            ...options
-          });
+          const fetchOptions = { ...options }; // Clone options
+          if (!(options.body instanceof FormData)) { // Only set Content-Type if not FormData
+            fetchOptions.headers = {
+              'Content-Type': 'application/json',
+              ...options.headers, // Preserve other headers if any
+            };
+          }
+          // For FormData, browser sets Content-Type automatically with boundary.
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.json();
+          const response = await fetch(url, fetchOptions);
+
+          // Try to parse as JSON, but handle cases where response might not be JSON (e.g. network error pages)
+          let responseData;
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.indexOf("application/json") !== -1) {
+              responseData = await response.json();
+          } else {
+              // If not JSON, attempt to get text, or just use status for error
+              responseData = { error: `Server returned non-JSON response: ${response.statusText}`, status: response.status };
+          }
+
+          if (!response.ok) {
+            // Use message from JSON response if available, otherwise use statusText
+            const errorMessage = responseData.mensaje || responseData.message || responseData.error || `Error HTTP ${response.status}`;
+            throw new Error(errorMessage);
+          }
+          return responseData;
         } catch (error) {
           console.error('API Error:', error);
-          throw error;
+          throw error; // Re-throw the error to be caught by the caller
         }
       },
 
@@ -1030,14 +1068,17 @@
         if (container) {
           container.innerHTML = commentsArray.map(c => `
             <div class="comment">
-              <div class="comment-header">
-                <strong>${c.usuario?.nombre}</strong>
-                <span>${new Date(c.fecha).toLocaleString()}</span>
+              <div class="comment-header" style="display: flex; align-items: center; gap: 8px;">
+                <img src="${c.usuario?.fotoPerfilUrl || '/images/default-avatar.svg'}" alt="Foto de ${c.usuario?.nombre || 'Usuario'}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                <div style="flex-grow: 1;">
+                  <strong>${c.usuario?.nombre || 'Usuario'}</strong>
+                  <span style="font-size: 10px; color: #bbb; display: block;">${new Date(c.fecha).toLocaleString()}</span>
+                </div>
                 ${c.usuario?._id === app.user._id ? `
-                  <button class="btn btn-delete" style="padding:2px 6px;font-size:10px" onclick="comments.delete('${c._id}', '${postId}')">×</button>
+                  <button class="btn btn-delete" style="padding:2px 6px;font-size:10px; margin-left: auto; flex-shrink: 0;" onclick="comments.delete('${c._id}', '${postId}')">×</button>
                 ` : ''}
               </div>
-              <div class="comment-content">${c.contenido}</div>
+              <div class="comment-content" style="padding-left: 38px;">${c.contenido}</div>
             </div>
           `).join('');
         }
@@ -1057,9 +1098,12 @@
 
         return `
           <div class="post ${isEditing ? 'editing' : ''}" data-id="${post._id}">
-            <div class="post-header">
-              <strong>${post.usuario?.nombre || 'Usuario'}</strong>
-              <span class="post-date">${new Date(post.fecha).toLocaleString()}</span>
+            <div class="post-header" style="display: flex; align-items: center; gap: 10px;">
+              <img src="${post.usuario?.fotoPerfilUrl || '/images/default-avatar.svg'}" alt="Foto de perfil de ${post.usuario?.nombre || 'Usuario'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+              <div>
+                <strong>${post.usuario?.nombre || 'Usuario'}</strong>
+                <span class="post-date" style="display: block; font-size: 11px; color: #bbb;">${new Date(post.fecha).toLocaleString()}</span>
+              </div>
             </div>
 
             <div class="post-content" id="content-${post._id}">
@@ -1069,8 +1113,14 @@
                   <button class="btn" onclick="posts.saveEdit('${post._id}')">💾 Guardar</button>
                   <button class="btn btn-delete" onclick="posts.cancelEdit('${post._id}')">❌ Cancelar</button>
                 </div>
-              ` : post.contenido}
+              ` : (post.contenido || '')}
             </div>
+
+            ${post.imagenUrl ? `
+            <div class="post-image-container" style="margin-top: 15px; margin-bottom: 10px;">
+              <img src="${post.imagenUrl}" alt="Imagen de la publicación" style="max-width: 100%; border-radius: 8px; display: block; margin-left: auto; margin-right: auto;">
+            </div>
+            ` : ''}
 
             <div class="post-footer">
               <div>
@@ -1100,18 +1150,51 @@
         `;
       },
 
-      async create(content) {
+      async create() { // No longer takes 'content' as argument
+        const content = document.getElementById('postContent').value.trim();
+        const imageGalleryInput = document.getElementById('postImageGallery');
+        const imageCameraInput = document.getElementById('postImageCamera');
+        const imagePreview = document.getElementById('imagePreview');
+
+        let file = null;
+        if (imageGalleryInput.files && imageGalleryInput.files[0]) {
+          file = imageGalleryInput.files[0];
+        } else if (imageCameraInput.files && imageCameraInput.files[0]) {
+          file = imageCameraInput.files[0];
+        }
+
+        if (!content && !file) {
+          utils.showMessage('Debes añadir contenido o una imagen.', 'error');
+          return;
+        }
+
         try {
-          await utils.apiCall('/publicaciones', {
+          const formData = new FormData();
+          formData.append('contenido', content);
+          formData.append('usuario', app.user._id); // Assuming app.user._id is available
+
+          if (file) {
+            formData.append('imagen', file);
+          }
+
+          // utils.showUpdateIndicator(); // Assuming this utility exists
+          await utils.apiCall('/publicaciones', { // utils.apiCall needs to be FormData-aware
             method: 'POST',
-            body: JSON.stringify({ usuario: app.user._id, contenido: content })
+            body: formData // No 'Content-Type' header here
           });
 
           utils.showMessage('Publicación creada', 'success');
           document.getElementById('postContent').value = '';
-          this.load();
+          imageGalleryInput.value = null; // Clear file input
+          imageCameraInput.value = null; // Clear file input
+          if (imagePreviewContainer) imagePreviewContainer.style.display = 'none'; 
+          if (imagePreview) imagePreview.src = '#'; 
+          this.load(); // Reload posts
         } catch (error) {
-          utils.showMessage('Error al crear publicación', 'error');
+          console.error('Error creating post:', error);
+          // Check if error.message is already a user-friendly message from backend
+          const errorMessage = error.message.includes('HTTP') || error.message.includes('NetworkError') ? 'Error de red o servidor.' : error.message;
+          utils.showMessage(errorMessage || 'Error al crear publicación', 'error');
         }
       },
 
@@ -1363,9 +1446,52 @@
 
       document.getElementById('postForm').onsubmit = (e) => {
         e.preventDefault();
-        const content = document.getElementById('postContent').value.trim();
-        if (content) posts.create(content);
+        posts.create(); // Call without arguments
       };
+
+      const imageGalleryInput = document.getElementById('postImageGallery');
+      const imageCameraInput = document.getElementById('postImageCamera');
+      const imagePreview = document.getElementById('imagePreview');
+      const imagePreviewContainer = document.getElementById('imagePreviewContainer'); // Add this
+
+      function handleFileSelect(event) {
+        const input = event.target;
+        // If this input is gallery, clear camera. If camera, clear gallery.
+        if (input.id === 'postImageGallery' && imageCameraInput.value) {
+          imageCameraInput.value = null;
+        } else if (input.id === 'postImageCamera' && imageGalleryInput.value) {
+          imageGalleryInput.value = null;
+        }
+        
+        const file = input.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreviewContainer.style.display = 'block'; // Show container
+          }
+          reader.readAsDataURL(file);
+        } else {
+          imagePreviewContainer.style.display = 'none'; // Hide container
+          imagePreview.src = '#';
+        }
+      }
+
+      imageGalleryInput.addEventListener('change', handleFileSelect);
+      imageCameraInput.addEventListener('change', handleFileSelect);
+
+      const removeImageBtn = document.getElementById('removeImageBtn');
+
+      function removeSelectedImage() {
+        imageGalleryInput.value = null;
+        imageCameraInput.value = null;
+        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+        if (imagePreview) imagePreview.src = '#';
+      }
+
+      if (removeImageBtn) { 
+          removeImageBtn.addEventListener('click', removeSelectedImage);
+      }
 
       document.getElementById('searchUser').oninput = utils.debounce((e) => {
         search.find(e.target.value.trim());

@@ -1,6 +1,97 @@
 const express = require('express');
 const router = express.Router();
 const Usuario = require('../models/Usuario');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure profile picture upload directory exists
+const profileUploadDir = path.join(__dirname, '..', 'public', 'uploads', 'profile_pictures');
+if (!fs.existsSync(profileUploadDir)){
+    fs.mkdirSync(profileUploadDir, { recursive: true });
+}
+
+// Multer storage configuration for profile pictures
+const profilePictureStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, profileUploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, req.params.id + '-' + Date.now() + path.extname(file.originalname)); // Prefix with user ID for clarity
+  }
+});
+
+// File filter for images (can be the same as for posts if general)
+const imageFileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos de imagen.'), false);
+  }
+};
+
+const uploadProfilePic = multer({ 
+    storage: profilePictureStorage, 
+    fileFilter: imageFileFilter, 
+    limits: { fileSize: 1024 * 1024 * 3 } // Limit file size to 3MB for profile pics
+});
+
+// Ruta para subir/actualizar foto de perfil
+router.post('/:id/foto-perfil', uploadProfilePic.single('fotoPerfil'), async (req, res) => {
+  try {
+    const usuarioId = req.params.id;
+
+    // Verificar que el usuario esté logueado
+    if (!req.session.usuario) {
+      return res.status(401).json({ mensaje: 'Debes iniciar sesión para cambiar tu foto de perfil.' });
+    }
+
+    // Verificar que el usuario solo pueda editar su propia foto
+    if (req.session.usuario._id !== usuarioId) {
+      // If an admin functionality is ever added, this check would need adjustment
+      return res.status(403).json({ mensaje: 'Solo puedes cambiar tu propia foto de perfil.' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ mensaje: 'No se seleccionó ningún archivo de imagen.' });
+    }
+
+    const usuario = await Usuario.findById(usuarioId);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    // Construct the URL for the profile picture
+    const fotoUrl = '/uploads/profile_pictures/' + req.file.filename;
+    usuario.fotoPerfilUrl = fotoUrl;
+    await usuario.save();
+
+    // Update session if the current user updated their own picture
+    if (req.session.usuario._id === usuarioId) {
+        req.session.usuario.fotoPerfilUrl = fotoUrl;
+    }
+
+    res.json({ 
+      mensaje: 'Foto de perfil actualizada correctamente.',
+      fotoPerfilUrl: fotoUrl,
+      // Optionally return other relevant user fields but avoid sensitive ones like password
+      usuario: { // Return a subset of user info
+          _id: usuario._id,
+          nombre: usuario.nombre,
+          fotoPerfilUrl: usuario.fotoPerfilUrl
+      }
+    });
+
+  } catch (error) {
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({ mensaje: 'Error de carga de archivo: ' + error.message });
+    } else if (error.message === 'Solo se permiten archivos de imagen.') {
+       return res.status(400).json({ mensaje: error.message });
+    }
+    console.error('Error al actualizar foto de perfil:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor al actualizar la foto de perfil.' });
+  }
+});
 
 // Registro de usuario
 router.post('/', async (req, res) => {

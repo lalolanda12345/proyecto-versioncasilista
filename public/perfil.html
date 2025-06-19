@@ -613,6 +613,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
 
   <div class="perfil-card">
     <div class="perfil-header">
+      <!-- Inside .perfil-header, before <h3 id="nombrePerfil"> -->
+      <div style="margin-bottom: 15px;">
+        <img id="fotoPerfilDisplay" src="/images/default-avatar.svg" alt="Foto de perfil" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+      </div>
       <h3 id="nombrePerfil">Nombre</h3>
       <button id="btnConfiguracion" class="btn-edit" style="margin-top: 10px; display: none;">⚙️ Configuración</button>
       
@@ -659,6 +663,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
             </div>
             <div class="settings-column settings-column-right">
                 <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+                    <label for="nuevaFotoPerfilInput" id="btnCambiarFotoPerfil" class="btn-edit" style="display: none;">
+                      📷 Cambiar Foto de Perfil
+                    </label>
+                    <input type="file" id="nuevaFotoPerfilInput" accept="image/*" style="display: none;">
                     <button id="btnEditarBiografia" class="btn-edit" style="display: none;">✏️ Editar biografía</button>
                     <button id="btnEditarNombre" class="btn-edit" style="display: none;">👤 Editar nombre</button>
                     <button id="btnEditarContrasena" class="btn-edit" style="display: none;">🔒 Cambiar contraseña</button>
@@ -707,6 +715,11 @@ input#tipoCuentaSwitch:checked + .slider:before {
     let esPerfilPropio = false;
     let usuarioActual = null;
     let currentProfileUserId = null; // Will be set in cargarPerfil
+
+    // DOM Elements for profile picture
+    const fotoPerfilDisplay = document.getElementById('fotoPerfilDisplay');
+    const btnCambiarFotoPerfil = document.getElementById('btnCambiarFotoPerfil'); 
+    const nuevaFotoPerfilInput = document.getElementById('nuevaFotoPerfilInput');
 
     // Modal DOM Elements
     const followersModal = document.getElementById('followersModal');
@@ -834,14 +847,19 @@ input#tipoCuentaSwitch:checked + .slider:before {
                          nombreEdit.style.display === 'block' ||
                          contrasenaEdit.style.display === 'block';
 
+      // Ensure btnCambiarFotoPerfil is defined (it should be if the HTML is updated)
+      const localBtnCambiarFotoPerfil = document.getElementById('btnCambiarFotoPerfil'); 
+
       if (esPerfilPropio && configuracionSection && configuracionSection.style.display === 'block' && !formActivo) {
         btnEditarBiografia.style.display = 'inline-block';
         btnEditarNombre.style.display = 'inline-block';
         btnEditarContrasena.style.display = 'inline-block';
+        if (localBtnCambiarFotoPerfil) localBtnCambiarFotoPerfil.style.display = 'inline-flex'; 
       } else {
         btnEditarBiografia.style.display = 'none';
         btnEditarNombre.style.display = 'none';
         btnEditarContrasena.style.display = 'none';
+        if (localBtnCambiarFotoPerfil) localBtnCambiarFotoPerfil.style.display = 'none';
       }
     }
 
@@ -927,6 +945,13 @@ input#tipoCuentaSwitch:checked + .slider:before {
         
         currentProfileUserId = usuario._id; // Store the profile user's ID
 
+        // Set profile picture
+        if (usuario.fotoPerfilUrl) {
+          fotoPerfilDisplay.src = usuario.fotoPerfilUrl;
+        } else {
+          fotoPerfilDisplay.src = '/images/default-avatar.svg'; 
+        }
+
         document.getElementById('nombrePerfil').textContent = usuario.nombre;
         document.getElementById('fechaPerfil').textContent = new Date(usuario.fechaRegistro).toLocaleDateString();
         const contadorSeguidoresSpan = document.getElementById('contadorSeguidores');
@@ -963,6 +988,9 @@ input#tipoCuentaSwitch:checked + .slider:before {
         if (usuarioActual && usuarioActual._id === id) { // Check if logged-in user is viewing their own profile
           esPerfilPropio = true;
           if(btnConfiguracion) btnConfiguracion.style.display = 'inline-block'; // Show settings button
+          // if (cambiarFotoLabel) { // This line will be removed by showEditButtons handling it
+          //   cambiarFotoLabel.style.display = 'inline-flex'; 
+          // }
           // Edit buttons are now inside configuracionSection, shown/hidden by toggleConfiguracion & showEditButtons
           
           // Setup account privacy settings. Visibility is handled by toggleConfiguracion
@@ -982,7 +1010,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
           if (btnSeguir && usuarioActual && usuarioActual.seguidos) { // Check if app.user (usuarioActual) and seguidos are available
               btnSeguir.style.display = 'inline-block'; 
 
-              let isFollowing = usuarioActual.seguidos.includes(currentProfileUserId);
+              let isFollowing = usuarioActual.seguidos.includes(profileUserId);
               btnSeguir.textContent = isFollowing ? 'Dejar de Seguir' : 'Seguir';
               if(isFollowing) {
                 btnSeguir.classList.add('unfollow-btn');
@@ -1004,8 +1032,8 @@ input#tipoCuentaSwitch:checked + .slider:before {
                   // showUpdateIndicator(); // Assuming showUpdateIndicator is available globally or via utils
                   
                   // Re-check current follow state from usuarioActual.seguidos before making API call
-                  isFollowing = usuarioActual.seguidos.includes(currentProfileUserId); 
-                  const endpoint = isFollowing ? `/usuarios/${currentProfileUserId}/unfollow` : `/usuarios/${currentProfileUserId}/follow`;
+                  isFollowing = usuarioActual.seguidos.includes(profileUserId); 
+                  const endpoint = isFollowing ? `/usuarios/${profileUserId}/unfollow` : `/usuarios/${profileUserId}/follow`;
                   
                   const fetchOptions = {
                     method: 'POST',
@@ -1022,10 +1050,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
 
                   // Update usuarioActual.seguidos locally for immediate UI consistency
                   if (isFollowing) { // User was unfollowing
-                    usuarioActual.seguidos = usuarioActual.seguidos.filter(id => id !== currentProfileUserId);
+                    usuarioActual.seguidos = usuarioActual.seguidos.filter(id => id !== profileUserId);
                   } else { // User was following
                     if (!usuarioActual.seguidos) usuarioActual.seguidos = [];
-                    usuarioActual.seguidos.push(currentProfileUserId);
+                    usuarioActual.seguidos.push(profileUserId);
                   }
                   
                   // Update button text and class after successful action
@@ -1078,6 +1106,56 @@ input#tipoCuentaSwitch:checked + .slider:before {
     }
 
     cargarPerfil();
+
+    async function subirNuevaFotoPerfil(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const profileId = params.get('id'); 
+
+      if (!profileId || (usuarioActual && usuarioActual._id !== profileId)) {
+        showNotification('No puedes cambiar la foto de perfil de otro usuario.', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('fotoPerfil', file);
+
+      try {
+        const response = await fetch(`/usuarios/${profileId}/foto-perfil`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.mensaje || 'Error al subir la foto.');
+        }
+
+        if (result.fotoPerfilUrl) {
+          fotoPerfilDisplay.src = result.fotoPerfilUrl;
+          if (usuarioActual && usuarioActual._id === profileId) {
+            usuarioActual.fotoPerfilUrl = result.fotoPerfilUrl; 
+          }
+          showNotification('Foto de perfil actualizada.', 'success');
+        } else {
+          showNotification('Error: No se recibió la URL de la nueva foto.', 'error');
+        }
+      } catch (error) {
+        console.error('Error al subir foto de perfil:', error);
+        showNotification(error.message || 'Error al subir la foto de perfil.', 'error');
+      } finally {
+        nuevaFotoPerfilInput.value = null;
+      }
+    }
+
+    if (nuevaFotoPerfilInput) {
+      nuevaFotoPerfilInput.addEventListener('change', subirNuevaFotoPerfil);
+    }
     // Removed setInterval for reloading other user's profile, as it can be disruptive.
     // A manual refresh or other UX would be better for that.
     // setInterval(() => {
