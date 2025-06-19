@@ -718,6 +718,74 @@
 #cancelLogoutBtn:hover {
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
+
+/* Reusable Confirmation Modal Styles */
+.confirmation-modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1001; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+  backdrop-filter: blur(5px); /* Optional: blur background */
+}
+
+.confirmation-modal-content {
+  background: linear-gradient(135deg, #1a0a2e, #16213e); /* Match panel styles */
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Match panel border */
+  width: 80%;
+  max-width: 450px;
+  text-align: center;
+  border-radius: 20px; /* Match panel border-radius */
+  color: #e0e6ed; /* Match body color */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); /* Match panel box-shadow */
+  animation: fadeInModal 0.3s ease-out; /* Assuming fadeInModal is defined elsewhere or generic */
+}
+
+.confirmation-modal-content p { /* General paragraph styling within modal */
+  font-size: 1.2em;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+.confirmation-modal-buttons {
+  display: flex;
+  justify-content: center; /* Center buttons */
+  gap: 15px; /* Space between buttons */
+  margin-top: 20px; /* Space above the buttons div */
+}
+
+.confirmation-btn {
+  /* Inherits from .btn, specific overrides or additions below */
+  padding: 12px 25px; /* Standard padding for modal buttons */
+  font-size: 14px; /* Standard font size for modal buttons */
+  border: none; /* Assuming .btn might not have this or we want to ensure it */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+  border-radius: 10px; /* Match .btn if possible */
+  color: #fff; /* Default text color */
+  font-weight: 600; /* Match .btn */
+}
+
+.confirmation-btn-confirm {
+  background: linear-gradient(135deg, #ef4444, #dc2626); /* Reddish for confirm/danger */
+}
+.confirmation-btn-confirm:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.confirmation-btn-cancel {
+  background: linear-gradient(135deg, #6b7280, #4b5563); /* Grayish for cancel */
+}
+.confirmation-btn-cancel:hover {
+  box-shadow: 0 6px 20px rgba(107, 114, 128, 0.5);
+}
+
   </style>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
@@ -933,6 +1001,56 @@
         }, 500);
       }
     };
+
+    // Confirmation Modal Functions
+    function showConfirmationModal(modalId, confirmCallback, customMessage = null) {
+      const modal = document.getElementById(modalId);
+      if (!modal) {
+        console.error(`Modal with id ${modalId} not found.`);
+        return;
+      }
+
+      const messageParagraph = modal.querySelector('p'); // Assuming the first p is the message
+      const confirmBtn = modal.querySelector('.confirmation-btn-confirm');
+      const cancelBtn = modal.querySelector('.confirmation-btn-cancel');
+
+      if (!messageParagraph || !confirmBtn || !cancelBtn) {
+        console.error(`Modal ${modalId} is missing essential elements (paragraph, confirm button, or cancel button).`);
+        return;
+      }
+
+      if (customMessage) {
+        messageParagraph.textContent = customMessage;
+      }
+
+      // Assign onclick handlers directly. This replaces any previous onclick handler.
+      confirmBtn.onclick = () => {
+        if (typeof confirmCallback === 'function') {
+          confirmCallback();
+        }
+        hideConfirmationModal(modalId);
+      };
+
+      cancelBtn.onclick = () => {
+        hideConfirmationModal(modalId);
+      };
+
+      modal.style.display = 'block';
+    }
+
+    function hideConfirmationModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.style.display = 'none';
+        // If onclick was used, no explicit listener removal is strictly necessary for those,
+        // as reassigning onclick in showConfirmationModal replaces them.
+        // However, if addEventListener was used, you'd remove them here:
+        // const confirmBtn = modal.querySelector('.confirmation-btn-confirm');
+        // const cancelBtn = modal.querySelector('.confirmation-btn-cancel');
+        // if (confirmBtn) confirmBtn.removeEventListener('click', ...);
+        // if (cancelBtn) cancelBtn.removeEventListener('click', ...);
+      }
+    }
 
     // Gestión de publicaciones
     const posts = {
@@ -1257,24 +1375,30 @@
       },
 
       async delete(postId) {
-        if (!confirm('¿Eliminar publicación?')) return;
+        const confirmCallback = async () => {
+          try {
+            await utils.apiCall(`/publicaciones/${postId}`, {
+              method: 'DELETE',
+              body: JSON.stringify({ usuarioId: app.user._id }) // app.user._id should be available
+            });
 
-        try {
-          await utils.apiCall(`/publicaciones/${postId}`, {
-            method: 'DELETE',
-            body: JSON.stringify({ usuarioId: app.user._id })
-          });
+            app.posts = app.posts.filter(p => p._id !== postId);
+            app.editing.delete(postId);
+            app.commentsOpen.delete(postId);
+            app.commentsData.delete(postId);
 
-          app.posts = app.posts.filter(p => p._id !== postId);
-          app.editing.delete(postId);
-          app.commentsOpen.delete(postId);
-          app.commentsData.delete(postId);
+            utils.showMessage('Publicación eliminada', 'success');
+            this.render(); // Assuming this.render() is preferred. Or use posts.smartRender() if available and preferred.
+          } catch (error) {
+            utils.showMessage(error.message || 'Error al eliminar la publicación', 'error');
+          }
+        };
 
-          utils.showMessage('Publicación eliminada', 'success');
-          this.render();
-        } catch (error) {
-          utils.showMessage('Error al eliminar', 'error');
-        }
+        showConfirmationModal(
+          'deletePostModal', 
+          confirmCallback, 
+          '¿Estás seguro de que quieres eliminar esta publicación?' // Explicitly setting message
+        );
       }
     };
 
@@ -1343,29 +1467,36 @@
       },
 
       async delete(commentId, postId) {
-        if (!confirm('¿Eliminar comentario?')) return;
+        const confirmCallback = async () => {
+          try {
+            await utils.apiCall(`/comentarios/${commentId}`, {
+              method: 'DELETE',
+              body: JSON.stringify({ usuarioId: app.user._id }) // app.user._id should be available
+            });
 
-        try {
-          await utils.apiCall(`/comentarios/${commentId}`, {
-            method: 'DELETE',
-            body: JSON.stringify({ usuarioId: app.user._id })
-          });
+            // Recargar comentarios y actualizar cache
+            await this.load(postId); // 'this' correctly refers to the 'comments' object here
 
-          // Recargar comentarios y actualizar cache
-          await this.load(postId);
-
-          // Actualizar contador inmediatamente
-          const post = app.posts.find(p => p._id === postId);
-          if (post) {
-            post.comentarios--;
-            const btn = document.querySelector(`[data-id="${postId}"] .btn-comment`);
-            if (btn) {
-              btn.innerHTML = `💬 ${post.comentarios}`;
+            // Actualizar contador inmediatamente
+            const post = app.posts.find(p => p._id === postId);
+            if (post) {
+              post.comentarios = Number(post.comentarios) - 1; // Ensure numeric operation
+              const btn = document.querySelector(`[data-id="${postId}"] .btn-comment`);
+              if (btn) {
+                btn.innerHTML = `💬 ${post.comentarios}`;
+              }
             }
+            utils.showMessage('Comentario eliminado', 'success');
+          } catch (error) {
+            utils.showMessage(error.message || 'Error al eliminar el comentario', 'error');
           }
-        } catch (error) {
-          utils.showMessage('Error al eliminar', 'error');
-        }
+        };
+
+        showConfirmationModal(
+          'deleteCommentModal',
+          confirmCallback,
+          '¿Estás seguro de que quieres eliminar este comentario?' // Explicitly setting message
+        );
       }
     };
 
@@ -1544,6 +1675,28 @@
     <p>¿Estás seguro que quieres cerrar sesión?</p> <!-- Inline style removed -->
     <button id="confirmLogoutBtn" class="btn">Confirmar</button> <!-- Inline style removed, rely on #confirmLogoutBtn CSS -->
     <button id="cancelLogoutBtn" class="btn">Cancelar</button> <!-- Inline style removed, rely on #cancelLogoutBtn CSS -->
+  </div>
+</div>
+
+<!-- Delete Post Confirmation Modal -->
+<div id="deletePostModal" class="confirmation-modal" style="display: none;">
+  <div class="confirmation-modal-content">
+    <p id="deletePostModalMessage">¿Estás seguro de que quieres eliminar esta publicación?</p>
+    <div class="confirmation-modal-buttons">
+      <button id="confirmDeletePostBtn" class="btn confirmation-btn confirmation-btn-confirm">Confirmar</button>
+      <button id="cancelDeletePostBtn" class="btn confirmation-btn confirmation-btn-cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Comment Confirmation Modal -->
+<div id="deleteCommentModal" class="confirmation-modal" style="display: none;">
+  <div class="confirmation-modal-content">
+    <p id="deleteCommentModalMessage">¿Estás seguro de que quieres eliminar este comentario?</p>
+    <div class="confirmation-modal-buttons">
+      <button id="confirmDeleteCommentBtn" class="btn confirmation-btn confirmation-btn-confirm">Confirmar</button>
+      <button id="cancelDeleteCommentBtn" class="btn confirmation-btn confirmation-btn-cancel">Cancelar</button>
+    </div>
   </div>
 </div>
 </body>
