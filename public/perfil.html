@@ -54,7 +54,7 @@
     }
 
     .logout-btn, .btn-edit {
-      padding: 12px 24px;
+      padding: 12px 24px; /* Default padding */
       background: rgba(255,255,255,0.1);
       color: white;
       border: 1px solid rgba(255,255,255,0.2);
@@ -470,13 +470,29 @@ input#tipoCuentaSwitch:checked + .slider:before {
     }
 
     .edit-buttons {
-      margin-top: 20px;
+      margin-top: 20px; 
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center; 
+      align-items: center;
       gap: 8px;
+      width: fit-content;
+     /* margin-left: auto; Ensure this is removed or commented out */
+     /* margin-right: auto; Ensure this is removed or commented out */
     }
 
+    .edit-buttons .btn-edit {
+      padding: 8px 20px;  /* Adjusted padding */
+      font-size: 13px;    /* Ensure this is still 13px */
+      line-height: 1.2;   /* Ensure this is still 1.2 */
+      justify-content: center; /* Added to center content within the button */
+    }
+
+    #btnCambiarFotoPerfil {
+      text-align: center;
+    }
+    
     @media (max-width: 600px) {
       .perfil-card { margin: 20px; }
       .perfil-header { padding: 40px 20px; }
@@ -486,11 +502,11 @@ input#tipoCuentaSwitch:checked + .slider:before {
       .form-input { max-width: 100%; }
       .editar-form { max-width: 100%; }
       .edit-buttons {
-        flex-direction: column;
-        align-items: center;
+        /* flex-direction: column; */ /* Removed to keep buttons horizontal */
+        align-items: center; /* This is from previous state, can be kept or removed if .edit-buttons rule above handles it */
       }
       .btn-edit {
-        width: 200px;
+        /* width: 200px; */ /* This is the important change here */
         justify-content: center;
       }
       .form-actions {
@@ -511,7 +527,10 @@ input#tipoCuentaSwitch:checked + .slider:before {
     }
 
     .settings-column {
-      flex: 1; /* Each column will take up equal available space */
+      flex: 1; /* Existing */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     /* Responsive adjustments */
@@ -658,11 +677,8 @@ input#tipoCuentaSwitch:checked + .slider:before {
     <div class="perfil-content">
       <div id="configuracionSection" style="display: none; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
         <div class="settings-columns-wrapper">
-            <div class="settings-column settings-column-left">
-                
-            </div>
             <div class="settings-column settings-column-right">
-                <div class="edit-buttons" style="margin-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+                <div class="edit-buttons" style="display: flex; justify-content: center; gap: 8px;">
                     <label for="nuevaFotoPerfilInput" id="btnCambiarFotoPerfil" class="btn-edit" style="display: none;">
                       📷 Cambiar Foto de Perfil
                     </label>
@@ -747,6 +763,7 @@ input#tipoCuentaSwitch:checked + .slider:before {
     const btnEditarContrasena = document.getElementById('btnEditarContrasena');
     const btnConfiguracion = document.getElementById('btnConfiguracion');
     const configuracionSection = document.getElementById('configuracionSection');
+    const accountPrivacySectionEl = document.getElementById('accountPrivacySection');
 
     // DOM Elements for Account Type
 
@@ -992,6 +1009,11 @@ input#tipoCuentaSwitch:checked + .slider:before {
           //   cambiarFotoLabel.style.display = 'inline-flex'; 
           // }
           // Edit buttons are now inside configuracionSection, shown/hidden by toggleConfiguracion & showEditButtons
+          
+          const btnSeguir = document.getElementById('btnSeguir');
+          if (btnSeguir) {
+            btnSeguir.style.display = 'none';
+          }
           
           // Setup account privacy settings. Visibility is handled by toggleConfiguracion
           // Ensure edit buttons are hidden initially if config section is hidden
