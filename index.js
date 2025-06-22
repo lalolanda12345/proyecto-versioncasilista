@@ -1,19 +1,27 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const app = express();
 mongoose.set('strictQuery', false);
 
 require('./database');
 
 app.use(express.json());
+
+// Configuración de la sesión con connect-mongo
 app.use(session({
   secret: 'mi-clave-secreta-super-segura',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({ 
+    mongoUrl: process.env.MONGODB_URI,
+    mongooseConnection: mongoose.connection, // Opcional, pero recomendado
+    collectionName: 'sessions' // Nombre de la colección para las sesiones
+  }),
   cookie: { 
-    secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    secure: false, // Poner a true si se usa HTTPS
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
   }
 }));
 
