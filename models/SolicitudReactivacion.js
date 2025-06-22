@@ -28,19 +28,17 @@ const SolicitudReactivacionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  fechaActualizacion: { // Good practice to track updates
+  fechaActualizacion: { 
     type: Date,
     default: Date.now
   }
 });
 
-// Middleware to update fechaActualizacion on save
 SolicitudReactivacionSchema.pre('save', function(next) {
   this.fechaActualizacion = Date.now();
   next();
 });
 
-// Add a compound index for common queries, e.g., finding a specific pending request
 SolicitudReactivacionSchema.index({ solicitante: 1, receptor: 1, chatPrivilegioId: 1, estado: 1 });
 
 module.exports = mongoose.model('SolicitudReactivacion', SolicitudReactivacionSchema);
