@@ -345,29 +345,40 @@ router.get('/conversaciones', async (req, res) => {
   if (!req.session.usuario || !req.session.usuario._id) {
     return res.status(401).json({ error: 'No autenticado' });
   }
-  const usuarioActualId = req.session.usuario._id;
+  const usuarioActualId = req.session.usuario._id.toString(); // Asegurarse de que es string para comparaciones
 
   try {
     const mensajes = await Mensaje.find({
       $or: [{ emisor: usuarioActualId }, { receptor: usuarioActualId }]
     })
-    .sort({ fechaEnvio: -1 }) // Get latest messages first for grouping
+    .sort({ fechaEnvio: -1 })
     .populate('emisor', 'nombre')
     .populate('receptor', 'nombre');
 
     const conversaciones = {};
     mensajes.forEach(mensaje => {
-      // Determine the other user in the conversation
-      const otroUsuarioId = mensaje.emisor._id.toString() === usuarioActualId ? mensaje.receptor._id.toString() : mensaje.emisor._id.toString();
-      const otroUsuarioNombre = mensaje.emisor._id.toString() === usuarioActualId ? mensaje.receptor.nombre : mensaje.emisor.nombre;
+      // ----- INICIO DE LA CORRECCIÓN -----
+      // Verificar que tanto el emisor como el receptor fueron populados correctamente
+      if (!mensaje.emisor || !mensaje.receptor) {
+        console.warn(`Mensaje con ID ${mensaje._id} omitido debido a emisor o receptor nulo (posible referencia rota).`);
+        return; // Saltar este mensaje y continuar con el siguiente
+      }
+      // ----- FIN DE LA CORRECCIÓN -----
+
+      const emisorId = mensaje.emisor._id.toString();
+      const receptorId = mensaje.receptor._id.toString();
+
+      // Determinar el otro usuario en la conversación
+      const otroUsuarioId = emisorId === usuarioActualId ? receptorId : emisorId;
+      const otroUsuarioNombre = emisorId === usuarioActualId ? mensaje.receptor.nombre : mensaje.emisor.nombre;
 
       if (!conversaciones[otroUsuarioId] || conversaciones[otroUsuarioId].fechaEnvio < mensaje.fechaEnvio) {
         conversaciones[otroUsuarioId] = {
           otroUsuario: { _id: otroUsuarioId, nombre: otroUsuarioNombre },
           ultimoMensaje: mensaje.contenido,
           fechaEnvio: mensaje.fechaEnvio,
-          emisorUltimoMensaje: mensaje.emisor.nombre,
-          esEmisor: mensaje.emisor._id.toString() === usuarioActualId
+          emisorUltimoMensaje: mensaje.emisor.nombre, // Ahora seguro porque mensaje.emisor no es null
+          esEmisor: emisorId === usuarioActualId // Ahora seguro
         };
       }
     });
@@ -375,35 +386,27 @@ router.get('/conversaciones', async (req, res) => {
     // Convert conversations object to an array
     let listaConversaciones = Object.values(conversaciones).sort((a,b) => b.fechaEnvio - a.fechaEnvio);
 
-    // Augment conversations with ChatPrivilegio data
     const augmentedListaConversaciones = [];
     for (const conv of listaConversaciones) {
-      const otroUsuarioId = conv.otroUsuario._id;
+      const otroUsuarioIdConv = conv.otroUsuario._id; // Ya es un string si se asignó correctamente
       const privilegio = await ChatPrivilegio.findOne({
         $or: [
-          { solicitante: usuarioActualId, receptor: otroUsuarioId },
-          { solicitante: otroUsuarioId, receptor: usuarioActualId }
+          { solicitante: usuarioActualId, receptor: otroUsuarioIdConv },
+          { solicitante: otroUsuarioIdConv, receptor: usuarioActualId }
         ]
       });
 
-      // Check if the conversation is hidden for the current user
       let isHiddenForCurrentUser = false;
-      if (privilegio && privilegio.hiddenForUsers && privilegio.hiddenForUsers.includes(usuarioActualId)) {
+      if (privilegio && privilegio.hiddenForUsers && privilegio.hiddenForUsers.map(id => id.toString()).includes(usuarioActualId)) {
         isHiddenForCurrentUser = true;
       }
 
       if (!isHiddenForCurrentUser) {
-        const augmentedConv = { ...conv }; // Clone the conversation object
-
+        const augmentedConv = { ...conv }; 
         if (privilegio) {
-          // Add relevant fields from privilegio.
-          // isArchived, archivedBy, archivedByMe are deprecated/removed from ChatPrivilegio model.
-          // isHidden is the new field (renamed from isArchived).
           augmentedConv.isHidden = privilegio.isHidden || false; 
           augmentedConv.chatPrivilegioEstado = privilegio.estado || 'none';
-          // Do not send sensitive arrays like hiddenForUsers to the client.
         } else {
-          // Default values if no privilegio record is found
           augmentedConv.isHidden = false;
           augmentedConv.chatPrivilegioEstado = 'none';
         }
@@ -413,7 +416,7 @@ router.get('/conversaciones', async (req, res) => {
 
     res.json(augmentedListaConversaciones);
   } catch (error) {
-    console.error('Error al obtener conversaciones:', error);
+    console.error('Error al obtener conversaciones:', error); // Esto ahora capturará otros errores, no el TypeError previo
     res.status(500).json({ error: 'Error interno del servidor al obtener las conversaciones.' });
   }
 });

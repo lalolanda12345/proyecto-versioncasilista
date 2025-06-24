@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const UsuarioSchema = new mongoose.Schema({
   nombre: { type: String, required: true, unique: true },
   contrasena: { type: String, required: true },
-  fotoPerfilUrl: { type: String, default: '' }, // New field, optional
+  fotoPerfilUrl: { type: String, default: '' },
   fechaRegistro: { type: Date, default: Date.now },
   seguidores: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
   seguidos:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],

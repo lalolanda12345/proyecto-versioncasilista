@@ -407,21 +407,34 @@
            ...options
          });
          if (!response.ok) {
-           const errorData = await response.text(); // Try to get more error info
+           const errorData = await response.text(); 
            console.error('API Error Data:', errorData);
-           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+           // Intentar parsear errorData como JSON si es posible, para un mensaje más específico
+           let specificErrorMessage = `HTTP ${response.status}: ${response.statusText}`;
+           try {
+             const parsedError = JSON.parse(errorData);
+             if (parsedError && parsedError.error) {
+               specificErrorMessage = parsedError.error; // Usar el mensaje de error de la API si está disponible
+             }
+           } catch (e) {
+             // No era JSON o no tenía la estructura esperada, usar errorData o el statusText
+             if (errorData && errorData.length < 100) { // Si errorData es corto, podría ser un mensaje útil
+                 specificErrorMessage = errorData;
+             }
+           }
+           throw new Error(specificErrorMessage); // Lanzar con el mensaje más específico
          }
-         // Check if response is JSON before parsing
          const contentType = response.headers.get("content-type");
          if (contentType && contentType.indexOf("application/json") !== -1) {
             return response.json();
          } else {
-            return response.text(); // Return as text if not JSON (e.g. for logout)
+            return response.text(); 
          }
        } catch (error) {
          console.error('API Call Error:', error);
-         // utils.showMessage(`Error en la solicitud: ${error.message}`, 'error'); // Avoid infinite loop if showMessage calls apiCall
-         throw error;
+         // Ahora sí llamamos a utils.showMessage
+         utils.showMessage(`Error en la solicitud: ${error.message}`, 'error'); 
+         throw error; // Re-lanzar para que el llamador pueda manejarlo también
        }
      },
      showUpdateIndicator() {
@@ -623,8 +636,22 @@
          });
        } catch (error) {
          console.error('Error loading conversations:', error);
-         // utils.showMessage('Error al cargar conversaciones', 'error'); // Already handled by apiCall
-         if(listaConversacionesEl) listaConversacionesEl.innerHTML = '<li style="text-align:center; color:red;">Error al cargar conversaciones.</li>';
+         // Ya no se mostrará el error directamente en la lista, utils.apiCall se encargará de la notificación.
+         // utils.showMessage('Error al cargar conversaciones', 'error'); // Redundante si apiCall ya lo hace.
+         
+         // Mantenemos el mensaje en la lista como un indicador visual persistente si la notificación se descarta.
+         if(listaConversacionesEl) {
+             let errorMessage = 'Error al cargar conversaciones.';
+             // error.message podría tener más detalles del error HTTP proveniente de apiCall
+             if (error && error.message && error.message.includes('HTTP')) { 
+                 // No mostramos el error.message completo aquí porque puede ser muy técnico para el LI
+                 // La notificación de utils.showMessage ya tendrá ese detalle.
+             } else if (error && error.message) {
+                 // Si es un error más genérico, podríamos añadirlo si es corto.
+                 // errorMessage += ` (${error.message})`; // Decidimos no hacerlo para mantener simple el LI
+             }
+             listaConversacionesEl.innerHTML = `<li style="text-align:center; color:red; padding: 15px !important; background: transparent !important; border: none !important;">${errorMessage}</li>`;
+         }
        }
      },
 
