@@ -10,4 +10,4 @@ const UsuarioSchema = new mongoose.Schema({
   biografia: {type: String, maxlength: 200, default: ''}
 });
 
-module.exports = mongoose.model('Usuario', UsuarioSchema); 
+module.exports = mongoose.model('Usuario', UsuarioSchema);
